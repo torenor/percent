@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>QR Code Generator with Color Picker</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2em; }
+        .controls { margin-bottom: 1em; }
+        label { margin-right: 1em; }
+        #qr-canvas { display: block; margin-top: 1em; }
+    </style>
+</head>
+<body>
+    <h2>QR Code Generator with Color Picker</h2>
+    <div class="controls">
+    <label>QR Code Color: <input type="color" id="qrColor" value="#003366"></label>
+    <label>Label Color: <input type="color" id="labelColor" value="#A9C47F"></label>
+    <label>Label Text:<br>
+    <textarea id="labelText" rows="3" cols="40">ACME Corp</textarea></label>
+    <label>QR URL: <input type="text" id="qrUrl" value="https://github.com" style="width: 350px;"></label>
+    <button id="generateBtn">Generate QR Code</button>
+    </div>
+    <canvas id="qr-canvas" width="300" height="555"></canvas>
+    <script>
+        function drawLabel(ctx, text, color, width, y) {
+            ctx.fillStyle = color;
+            ctx.fillRect(0, y, width, 50);
+            ctx.font = '24px Open Sans, Arial, Helvetica, sans-serif';
+            ctx.fillStyle = '#000';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            // Support line breaks
+            const lines = text.split('\n');
+            const lineHeight = 28;
+            const totalHeight = lineHeight * lines.length;
+            const startY = y + (50 - totalHeight) / 2 + lineHeight / 2;
+            lines.forEach((line, i) => {
+                ctx.fillText(line, width/2, startY + i * lineHeight);
+            });
+        }
+
+        document.getElementById('generateBtn').onclick = function() {
+            const qrColor = document.getElementById('qrColor').value;
+            const labelColor = document.getElementById('labelColor').value;
+            const labelText = document.getElementById('labelText').value;
+            const qrUrl = document.getElementById('qrUrl').value;
+            const canvas = document.getElementById('qr-canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Generate QR code to temp canvas
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = 300;
+            tempCanvas.height = 300;
+            QRCode.toCanvas(tempCanvas, qrUrl, {
+                color: {
+                    dark: qrColor,
+                    light: '#fff'
+                },
+                width: 300
+            }, function (error) {
+                if (error) return alert(error);
+                // Draw QR code
+                ctx.drawImage(tempCanvas, 0, 0);
+                // Draw label
+                drawLabel(ctx, labelText, labelColor, 300, 300);
+            });
+        };
+
+        // Initial draw
+        document.getElementById('generateBtn').click();
+    </script>
+</body>
+</html>
