@@ -2,11 +2,13 @@
 const trackPageView = async () => {
     // 1. Capture the required data
     const pageUrl = window.location.href;       // Get the full URL of the current page
+    const pageTitle = document.title;          // Get the title of the current page
     const clickTime = new Date().toISOString(); // Get the current time in ISO format
 
     const data = {
         pageUrl: pageUrl,
-        clickTime: clickTime
+        clickTime: clickTime,
+        pageTitle: pageTitle
     };
     
     // NOTE: This endpoint must match your server's route
