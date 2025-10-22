@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tabulator Local File Import</title>
+    <link href="https://unpkg.com/tabulator-tables@6.3.1/dist/css/tabulator_bootstrap5.min.css" rel="stylesheet">
+    <script type="text/javascript" src="https://unpkg.com/tabulator-tables@6.3.1/dist/js/tabulator.min.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+    <script type="text/javascript" src="https://oss.sheetjs.com/sheetjs/xlsx.full.min.js"></script>
+    <script src="https://torenor.github.io/percent/tnClickClient.js"></script>
+    
+</head>
+<body>
+    <h1>Load Data</h1>
+
+    <div style="padding: 10px; border: 1px solid #ccc; margin-bottom: 10px;">
+        <h3>From Local File: .json, .xlsx, .csv</h3>
+        <input type="file" id="dataFile" accept=".xlsx, .csv, .ods, .json" style="display: none;">
+        <button id="importButton">Choose File to Import</button>
+    </div>
+
+    <div style="padding: 10px; border: 1px solid #ccc; margin-bottom: 10px;">
+        <h3>From Pasted JSON</h3>
+        <textarea id="json-input" rows="5" style="width: 100%; box-sizing: border-box;" placeholder="Paste JSON array here..."></textarea><br>
+        <button id="load-json-button" style="margin-top: 5px;">Load Pasted JSON</button>
+    </div>
+
+    <hr>
+    <h3>Download Data</h3>
+    <button id="download-csv">Download CSV</button>
+    <button id="download-xlsx">Download XLSX</button>
+    <button id="download-json">Download JSON</button>
+    
+    <div id="example-table" style="margin-top: 10px;"></div>
+
+    <script type="text/javascript">
+     document.getElementById("download-csv").addEventListener("click", function(){
+    const timestampvar = new Date().toISOString().replace(/[:\.]/g, "_");
+    table.download("csv", "table-output-" + timestampvar + ".csv");
+    });
+
+    
+     document.getElementById("download-xlsx").addEventListener("click", function(){
+    const timestampvar = new Date().toISOString().replace(/[:\.]/g, "_");
+    table.download("xlsx", "table-output-" + timestampvar + ".xlsx", {sheetName:"data"});
+   });
+
+        document.getElementById("download-json").addEventListener("click", function(){
+    const timestampvar = new Date().toISOString().replace(/[:\.]/g, "_");
+    table.download("json", "table-output-" + timestampvar + ".json");
+    });
+
+
+   // Build Tabulator
+        var table = new Tabulator("#example-table", {
+            height:1700,
+            layout:"fitColumns",
+            autoColumns:true,
+            placeholder:"Awaiting Data, Please Load File or Paste JSON",
+            autoColumnsDefinitions: function(definitions) {
+                definitions.forEach(function(column, idx) {
+                    column.headerFilter = true;
+                    if(idx === 0) {
+                        column.topCalc = "count";
+                    }
+                });
+                return definitions;
+            }
+        });
+
+        function csvToJson(csv){
+            var lines=csv.replace(/\r/g, '').split("\n");
+            var result = [];
+            var headers=lines[0].split(",");
+            for(var i=1;i<lines.length;i++){
+                if (!lines[i]) continue;
+                var obj = {};
+                var currentline=lines[i].split(",");
+                for(var j=0;j<headers.length;j++){
+                    obj[headers[j].trim()] = currentline[j] ? currentline[j].trim() : "";
+                }
+                result.push(obj);
+            }
+            return result;
+        }
+
+        // Handle pasted JSON
+        document.getElementById("load-json-button").addEventListener("click", function(){
+            var jsonString = document.getElementById("json-input").value;
+            if (jsonString) {
+                try {
+                    var jsonData = JSON.parse(jsonString);
+                    table.setData(jsonData);
+                } catch (err) {
+                    alert("Invalid JSON data: " + err.message);
+                }
+            } else {
+                alert("Textarea is empty. Please paste JSON data.");
+            }
+        });
+
+
+        // Open file picker when button is clicked
+        document.getElementById("importButton").addEventListener("click", function(){
+            document.getElementById("dataFile").click();
+        });
+
+        // Handle file selection
+        document.getElementById("dataFile").addEventListener("change", function(e){
+            e.preventDefault();
+            var fileInput = e.target;
+            var file = fileInput.files[0];
+            if(!file) return;
+            var ext = file.name.split('.').pop().toLowerCase();
+            var reader = new FileReader();
+
+            if(ext === "xlsx" || ext === "ods"){
+                reader.onload = function(e){
+                    try {
+                        var workbook = XLSX.read(e.target.result, {type: 'array'});
+                        var first_sheet_name = workbook.SheetNames[0];
+                        var worksheet = workbook.Sheets[first_sheet_name];
+                        var json_data = XLSX.utils.sheet_to_json(worksheet);
+                        table.setData(json_data);
+                    } catch (err) {
+                        alert("Error processing spreadsheet: " + err.message);
+                    }
+                    fileInput.value = "";
+                };
+                reader.readAsArrayBuffer(file);
+            } else if(ext === "csv") {
+                reader.onload = function(e){
+                    try {
+                        var json_data = csvToJson(e.target.result);
+                        table.setData(json_data);
+                    } catch (err) {
+                        alert("Error processing CSV: " + err.message);
+                    }
+                    fileInput.value = "";
+                };
+                reader.readAsText(file);
+            } else if(ext === "json") {
+                reader.onload = function(e){
+                    try {
+                        var json = JSON.parse(e.target.result);
+                        table.setData(json);
+                    } catch(err) {
+                        alert("Invalid JSON file.");
+                    }
+                    fileInput.value = "";
+                };
+                reader.readAsText(file);
+            } else {
+                alert("Unsupported file type.");
+                fileInput.value = "";
+            }
+        });
+    </script>
+</body>
+</html>
