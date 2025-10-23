@@ -1,0 +1,844 @@
+
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+            <title>Kvalitetsportalen</title>
+
+    <script src="/Scripts/modernizr-2.8.3.js"></script>
+
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="/Img/Delta/favicon/apple-touch-icon-57x57.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="/Img/Delta/favicon/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="/Img/Delta/favicon/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/Img/Delta/favicon/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="/Img/Delta/favicon/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="/Img/Delta/favicon/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="/Img/Delta/favicon/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="/Img/Delta/favicon/apple-touch-icon-152x152.png" />
+    <link rel="icon" type="image/png" href="/Img/Delta/favicon/favicon-196x196.png" sizes="196x196" />
+    <link rel="icon" type="image/png" href="/Img/Delta/favicon/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="/Img/Delta/favicon/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="/Img/Delta/favicon/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="/Img/Delta/favicon/favicon-128.png" sizes="128x128" />
+    <meta name="application-name" content="Datakvalitet Delta" />
+    <meta name="msapplication-TileColor" content="#FFFFFF" />
+    <meta name="msapplication-TileImage" content="/Img/Delta/favicon/mstile-144x144.png" />
+    <meta name="msapplication-square70x70logo" content="/Img/Delta/favicon/mstile-70x70.png" />
+    <meta name="msapplication-square150x150logo" content="/Img/Delta/favicon/mstile-150x150.png" />
+    <meta name="msapplication-wide310x150logo" content="/Img/Delta/favicon/mstile-310x150.png" />
+    <meta name="msapplication-square310x310logo" content="/Img/Delta/favicon/mstile-310x310.png" />
+
+        <link rel="stylesheet" href="/script/ResponsivePortal/3Party/bootstrap-3.3.7-dist/css/dkbootstrap.min.css?Ver=20605">
+
+    <link rel="stylesheet" href="/Areas/Shell/Style/Shell.css?Ver=20605">
+
+    <link rel="stylesheet" href="/Style/ResponsivePortal/flag-icon-css/css/flag-icon.min.css?Ver=20605" />
+
+
+    <link rel="stylesheet" href="/Style/ResponsivePortal/flag-icon-css/css/flag-icon.min.css?Ver=20605" />
+
+        <link rel="stylesheet" href="/script/ResponsivePortal/3Party/bootstrap-3.3.7-dist/css/BootstrapCss.aspx?id=1&v=1760798641" />
+
+    <link rel="stylesheet" href="/Style/ResponsivePortal/master.css?Ver=20605" />
+    
+    
+</head>
+
+
+<body class="rp2">
+
+
+
+
+
+<nav class="navbar navbar-shell navbar-static-top test-system">
+    <div class="container">
+
+        
+        <ul class="nav navbar-nav navbar-left pull-left" id="ulModuleSelector">
+            <li>
+                <a class="dropdown-toggle active" data-toggle="dropdown" aria-label="Meny" tabindex="0">
+                    <span class="glyphicon glyphicon-th"></span>
+                    Portalen
+                </a>
+
+                
+                <ul class="dropdown-menu dropdown-menu-dk-xs">
+
+                    <li class="dropdown-header">Visning</li>
+                    <li class="active">
+                        <a href="/Portal">Portalen</a>
+                    </li>
+
+                        <li class="divider"></li>
+                        <li class="dropdown-header">Moduler</li>
+                            <li class="">
+                                <a href="/Delta/Frame/Module/1">Avvik og forbedring</a>
+                            </li>
+                            <li class="">
+                                <a href="/Delta/Frame/Module/16">GDPR</a>
+                            </li>
+                            <li class="">
+                                <a href="/Delta/Frame/Module/4">Risikovurdering</a>
+                            </li>
+
+                </ul>
+            </li>
+        </ul>
+
+
+        
+
+
+        
+        <div class="navbar-brand navbar-right pull-right">
+            <a href="/Portal">
+                <img src="/Img/Common/logo_60.png" alt="Datakvalitet" />
+            </a>
+        </div>
+
+        
+                <ul class="nav navbar-nav navbar-right pull-right currentuser">
+                <li>
+                    <a class="dropdown-toggle" data-toggle="dropdown">
+                            <span class="glyphicon-flag-grid">
+                                <span class="glyphicon glyphicon-user"></span>
+                                <span class="flag-icon flag-icon-no"></span>
+                            </span>
+
+
+                        <span class="hidden-xs">Tore Nordmark</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-right dropdown-menu-dk-xs">
+                                <li>
+                                    <a href="?ocpp=35&amp;ocps=&amp;ocpm=&amp;q=test&amp;search_class=-99&amp;lang=no"><span class="flag-icon flag-icon-no" style="font-size: 14px;"></span>&nbsp;&nbsp;<span>Norsk</span></a>
+                                </li>
+                                <li>
+                                    <a href="?ocpp=35&amp;ocps=&amp;ocpm=&amp;q=test&amp;search_class=-99&amp;lang=gb"><span class="flag-icon flag-icon-gb" style="font-size: 14px;"></span>&nbsp;&nbsp;<span>English</span></a>
+                                </li>
+                            <li class="divider"></li>
+                        <li><a href="/Shell/Auth/Logout"><span class="glyphicon glyphicon-log-out"></span> Logg ut</a></li>
+
+                            <li>
+                                <br />
+                                <span style="padding-left:20px;color:#666">Bytt til bruker:</span>
+                                    <a href="/Shell/Auth/ImpersonateAsUser?userID=1780"><span class="glyphicon glyphicon-arrow-right"></span> Administrator Tore Nordmark</a>
+                            </li>
+
+
+
+                    </ul>
+                </li>
+        </ul>
+
+        
+            <ul class="nav navbar-nav navbar-right pull-right">
+                <li>
+                    <a href="/Shell/MyPage/">
+                        <span class="glyphicon glyphicon-calendar"></span>
+                        <span class="hidden-xs">Min side</span>
+                    </a>
+                </li>
+            </ul>
+                <ul class="nav navbar-nav navbar-right pull-right">
+                    <li>
+                        <a href="/Shell/OurPage/">
+                            <span class="glyphicon glyphicon-blackboard"></span>
+                            <span class="hidden-xs">V&#229;r side</span>
+                        </a>
+                    </li>
+                </ul>
+                    <ul class="nav navbar-nav navbar-right pull-right">
+                <li>
+                    <a href="https://support.datakvalitet.no/Shell/Auth/Login/?dksl=HcoP9HmM3tHuP1FxOs%2fqUhilb8iiz%2boqCJDw3PaA0M0%2fwKiDmAOXxTCik9AIy9q8IQExDrMa5oFo4xEsRWCARg%3d%3d&amp;ReturnUrl=%2fportal.aspx%3flang%3dno" target="_self">
+                        <span class="glyphicon glyphicon-question-sign"></span>
+                        <span class="hidden-xs">Hjelp</span>
+                    </a>
+                </li>
+            </ul>
+                <div class="collapse navbar-collapse pull-left" id="shellNavbarCollapse">
+        </div>
+
+    </div>
+</nav>
+
+
+
+
+
+        <div class="rp-headerwrapper">
+            <div class="container">
+                <div id="pnlHeaderContainer" class="">
+
+                            <!-- XS only -->
+                            <div class="row rp-noprint hidden-sm hidden-md hidden-lg hidden-xl" style="padding-top:1em;">
+
+                                    <div class="col-xs-2">
+                                        <!-- Toggle current sidebar -->
+                                        <a href="#" class="pull-left" data-toggle="collapse" data-target="#leftnavbar">
+                                            <span class="sr-only">Tabell</span>
+                                            <span class="glyphicon glyphicon-th" style="font-weight: normal; font-size: 20px; margin-top:6px;"></span>
+                                        </a>
+                                    </div>
+                                <div class="col-xs-8">
+                                        <!-- Search -->
+                                        <div id="rpHeadingSearch" class="notfixedheight clearfix  in">
+
+                                            
+<form class="navbar-form rp-navform pull-right" data-role="search" role="search" action="/Portal/1/32/35/Search">
+    <div class="input-group">
+
+
+
+                <input type="hidden" name="ocpp" value="35" />
+                <input type="hidden" name="ocps" value="" />
+                <input type="hidden" name="ocpm" value="" />
+
+
+
+        <input type="text" class="form-control  rp-searchwithdropdown" aria-label="S&#248;k ..." placeholder="S&#248;k ..." name="q" value="test">
+
+            <span class="input-group-btn bs-dropdown-to-select-group">
+                <button type="button" class="btn btn-default dropdown-toggle as-is bs-dropdown-to-select" data-toggle="dropdown" aria-expanded="false" aria-haspopup="true">
+                    <span data-bind="bs-drp-sel-label">Dokumenter</span>
+                    <input type="hidden" name="search_class" id="search_class" data-bind="bs-drp-sel-value" value="-99" />
+                    <span class="caret"></span>
+                    <span class="sr-only">Toggle Dropdown</span>
+                </button>
+
+                <ul class="dropdown-menu dropdown-menu-right" role="menu" style="">
+                    <li data-value="-99"><a href="#">Dokumenter</a></li><li class="divider"></li><li data-value="1"><a href="#">Avvik og forbedring</a></li><li data-value="16"><a href="#">GDPR</a></li>
+                </ul>
+            </span>
+    </div>
+</form>
+
+                                        </div>
+                                </div>
+                                <div class="col-xs-2">
+                                    <!-- Toggle navbar -->
+                                    <a href="#" class="pull-right" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                                        <span class="sr-only">Meny</span>
+                                        <span class="glyphicon glyphicon-menu-hamburger" style="font-weight: normal; font-size: 20px; margin-top:6px;"></span>
+                                    </a>
+                                </div>
+                            </div>
+                            <!-- SM MD LG XL -->
+                            <div class="row rp-noprint">
+                                <div class="col-sm-12">
+                                    <nav class="navbar navbar-default dkp2-navelem rp-navoneliner rp-navjustified rp-navjustified-firstlastedge test-system" role="navigation">
+                                        <div id="navbar" class="navbar-collapse collapse">
+                                            <ul class="nav navbar-nav">
+
+                                                <!-- Title / Logo -->
+                                                <li id="rpHeadingLeftOneLiner">
+                                                            <a href="/Portal/1">
+                                                                <img src="/SubPage/ResponsivePortal/PortalLogo.aspx?rpmain=1" class="rp-logo-alone" alt="Firma logo til Datakvalitet som en navigeringsknapp." />
+                                                            </a>
+                                                </li>
+
+                                                <!-- Main menu  -->
+                                                <li class="active  ">
+                                        <a href="/Portal/1/32" target="_self"  class="">
+                                            <span class="hidden-sm">Startsiden</span>
+                                            <span class="visible-sm-inline">Startsiden</span>
+                                            
+                                        </a>
+                                        </li><li class="  ">
+                                        <a href="/Portal/1/1" target="_self"  class="">
+                                            <span class="hidden-sm">Dokumenter</span>
+                                            <span class="visible-sm-inline">Dokumenter</span>
+                                            
+                                        </a>
+                                        </li><li class="  ">
+                                        <a href="/Portal/1/9" target="_self"  class="">
+                                            <span class="hidden-sm">Avvik og forbedring</span>
+                                            <span class="visible-sm-inline">Avvik og forbedring</span>
+                                            
+                                        </a>
+                                        </li><li class="  ">
+                                        <a href="/Portal/1/20" target="_self"  class="">
+                                            <span class="hidden-sm">GDPR</span>
+                                            <span class="visible-sm-inline">GDPR</span>
+                                            
+                                        </a>
+                                        </li><li class="  ">
+                                        <a href="/Portal/1/66" target="_self"  class="">
+                                            <span class="hidden-sm">it-privat</span>
+                                            <span class="visible-sm-inline">it-privat</span>
+                                            
+                                        </a>
+                                        </li>
+
+                                                <!-- User menu -->
+                                            </ul>
+                                        </div>
+                                    </nav>
+                                </div>
+                            </div>
+
+                </div>
+            </div>
+        </div>
+    <div class="container">
+        <div id="pnlMainContainer" class="rp-leftandmaincontainer ">
+            <div class="row">
+
+                
+                        <div id="colLeftMenu" class="rp-noprint col-sm-5 col-lg-3 col-md-4" style="">
+                            
+                            <div class="sidebar sidebar-default full-height">
+                                <div id="leftnavbar" class="sidebar-collapse collapse " style="">
+                                    
+
+    <div style="padding:15px;">
+
+        <h2 style="margin: 1em 0 0 0; padding: 0">S&#248;kefilter</h2>
+        <hr />
+
+        <label style="font-weight: normal;" for="rps-onlytitle">
+            <input type="checkbox" id="rps-onlytitle" class="dksf-cb dksf-cb-ts"  value="1" />
+            S&#248;k kun i tittel
+        </label>
+
+
+
+
+        
+                    <div class="rpstruct-tree">
+                
+    <div class="checkbox dksf-location">
+        <label class="text-muted">
+            <input type="checkbox" class="dksf-cb dksf-cb-loc" value="dksrf-location-00" >
+            Nord universitet
+        </label>
+    </div>
+        <div class="collapse in" id="rpstruct_tree_sublevel_00" style="padding-left: 1em;">
+    <div class="checkbox dksf-location">
+        <label class="">
+            <input type="checkbox" class="dksf-cb dksf-cb-loc" value="dksrf-location-0001" >
+            Nords kvalitetssystem
+                <small>(8)</small>
+        </label>
+    </div>
+        <div class="collapse " id="rpstruct_tree_sublevel_0001" style="padding-left: 1em;">
+    <div class="checkbox dksf-location">
+        <label class="">
+            <input type="checkbox" class="dksf-cb dksf-cb-loc" value="dksrf-location-000107" >
+            HR
+                <small>(4)</small>
+        </label>
+    </div>
+        <div class="collapse " id="rpstruct_tree_sublevel_000107" style="padding-left: 1em;">
+    <div class="checkbox dksf-location">
+        <label class="">
+            <input type="checkbox" class="dksf-cb dksf-cb-loc" value="dksrf-location-00010701" >
+            Rekruttering
+                <small>(3)</small>
+        </label>
+    </div>
+    <div class="checkbox dksf-location">
+        <label class="">
+            <input type="checkbox" class="dksf-cb dksf-cb-loc" value="dksrf-location-00010705" >
+            Medarbeiderutvikling
+                <small>(1)</small>
+        </label>
+    </div>
+        </div>
+    <div class="checkbox dksf-location">
+        <label class="">
+            <input type="checkbox" class="dksf-cb dksf-cb-loc" value="dksrf-location-000111" >
+            Informasjonssikkerhet og personvern​
+                <small>(4)</small>
+        </label>
+    </div>
+        </div>
+    <div class="checkbox dksf-location">
+        <label class="">
+            <input type="checkbox" class="dksf-cb dksf-cb-loc" value="dksrf-location-0003" >
+            Testomr&#229;de
+                <small>(2)</small>
+        </label>
+    </div>
+        <div class="collapse " id="rpstruct_tree_sublevel_0003" style="padding-left: 1em;">
+    <div class="checkbox dksf-location">
+        <label class="">
+            <input type="checkbox" class="dksf-cb dksf-cb-loc" value="dksrf-location-000301" >
+            Leverand&#248;r tester rettigheter 
+                <small>(1)</small>
+        </label>
+    </div>
+        </div>
+        </div>
+                
+            </div>
+                        
+    </div>
+
+
+                                    
+                                </div>
+                            </div>
+                        </div>
+                <div class="rpmch  col-md-8 col-sm-7 col-lg-9"
+                     style="">
+                    
+
+
+
+
+
+
+
+
+
+
+    <div id="rpstoppanel" class="row" style="padding:15px;">
+        <div class="col-xs-12 col-sm-6">
+    <div style="padding: 7px 0 7px 0;" class="pull-left"> 
+
+            <a href="/Portal/1/32">Startsiden</a>
+                <span>&nbsp;/&nbsp;</span>
+            <a href="/Portal/1/32/35">Vis dokumenter</a>
+    </div>
+
+        </div>
+        <div class="col-xs-12 col-sm-6">
+
+<form class="navbar-form rp-navform pull-right" data-role="search" role="search" action="/Portal/1/32/35/Search">
+    <div class="input-group">
+
+
+
+                <input type="hidden" name="ocpp" value="35" />
+                <input type="hidden" name="ocps" value="" />
+                <input type="hidden" name="ocpm" value="" />
+
+
+
+        <input type="text" class="form-control  rp-searchwithdropdown" aria-label="S&#248;k ..." placeholder="S&#248;k ..." name="q" value="test">
+
+            <span class="input-group-btn bs-dropdown-to-select-group">
+                <button type="button" class="btn btn-default dropdown-toggle as-is bs-dropdown-to-select" data-toggle="dropdown" aria-expanded="false" aria-haspopup="true">
+                    <span data-bind="bs-drp-sel-label">Dokumenter</span>
+                    <input type="hidden" name="search_class" id="search_class" data-bind="bs-drp-sel-value" value="-99" />
+                    <span class="caret"></span>
+                    <span class="sr-only">Toggle Dropdown</span>
+                </button>
+
+                <ul class="dropdown-menu dropdown-menu-right" role="menu" style="">
+                    <li data-value="-99"><a href="#">Dokumenter</a></li><li class="divider"></li><li data-value="1"><a href="#">Avvik og forbedring</a></li><li data-value="16"><a href="#">GDPR</a></li>
+                </ul>
+            </span>
+    </div>
+</form>
+        </div>
+    </div>
+
+<div class="rpsccontainer">
+
+    
+    <div class="row" style="margin-bottom:1em;">
+        <div class="col-sm-12">
+                    </div>
+    </div>
+    <h1>S&#248;keresultat: 10 treff</h1>
+    <main>
+
+
+        
+                                <div class="row dksrf-all dksrf-doc dksrf-doct-2 dksrf-tk-000301">
+                    <div class="col-sm-9">
+                        <a href="#rpShowDynamicModalDocument-312" target="_self" class="rp-search-result-heading">
+                            test av varsel om revidering til ek-ansvarlig + flere
+                            <sup class="docstatus">  </sup>
+                        </a>
+                        
+                                                        <div class="dropdown" style="display: inline-block; margin-left: 5px;">
+                                                          <button class="btn btn-default dropdown-toggle btn-xs" type="button" role="button" title="Toggle Dropdown" aria-haspopup="true" aria-expanded="false" aria-label="Toggle Dropdown" id="rprsp-docdd-312" data-toggle="dropdown"><span class="caret"></span></button>
+                                                          <ul class="rprtc-docdropdown dropdown-menu" role="menu" aria-labelledby="rprsp-docdd-312">
+                                                            <li role="menuitem"><a href="#" onclick="rpDocumentPropertiesPopup(312, '/')">Dokumentegenskaper</a></li>
+                                                            <li class="divider" role="separator"></li>
+                                                            <li class="dropdown-header">Filformater</li><li role="presentation"><a role="menuitem" href="/docs/pub/DOK00312.htm" target="_blank">HTML-Mobil</a></li><li role="presentation"><a role="menuitem" href="/docs/pub/DOK00312.pdf" target="_blank">PDF</a></li><li role="presentation"><a role="menuitem" href="/docs/dok/DOK00312.docx" target="_blank">Originalfil docx</a></li>
+                                                            
+                                                            
+                                                          </ul>
+                                                        </div>
+                        <p>
+
+<b>Test</b> 2
+
+
+
+
+
+Kryssreferanser
+ 
+ 
+Eksterne referanser
+ 
+
+
+
+
+
+
+	
+</p>
+                            <small>Nord universitet/Testomr&#229;de/Leverand&#248;r tester rettigheter </small>
+                    </div>
+                    <div class="col-sm-3">
+                        <ul class="list-unstyled">
+                            <li><i class="glyphicon glyphicon-file"></i> <small>D00312</small></li>
+                            <li><i class="glyphicon glyphicon-home"></i> <a href="#rpShowDynamicTree-1-80"><small>Leverand&#248;r tester rettigheter </small></a></li>
+                        </ul>
+                    </div>
+                    <div class="col-sm-12">
+                        <hr style="margin-top:10px;" />
+                    </div>
+                </div>
+                <div class="row dksrf-all dksrf-doc dksrf-doct-2 dksrf-tk-0003">
+                    <div class="col-sm-9">
+                        <a href="#rpShowDynamicModalDocument-311" target="_self" class="rp-search-result-heading">
+                            test av varsel om revidering til ek-ansvarlig
+                            <sup class="docstatus">  </sup>
+                        </a>
+                        
+                                                        <div class="dropdown" style="display: inline-block; margin-left: 5px;">
+                                                          <button class="btn btn-default dropdown-toggle btn-xs" type="button" role="button" title="Toggle Dropdown" aria-haspopup="true" aria-expanded="false" aria-label="Toggle Dropdown" id="rprsp-docdd-311" data-toggle="dropdown"><span class="caret"></span></button>
+                                                          <ul class="rprtc-docdropdown dropdown-menu" role="menu" aria-labelledby="rprsp-docdd-311">
+                                                            <li role="menuitem"><a href="#" onclick="rpDocumentPropertiesPopup(311, '/')">Dokumentegenskaper</a></li>
+                                                            <li class="divider" role="separator"></li>
+                                                            <li class="dropdown-header">Filformater</li><li role="presentation"><a role="menuitem" href="/docs/pub/DOK00311.htm" target="_blank">HTML-Mobil</a></li><li role="presentation"><a role="menuitem" href="/docs/pub/DOK00311.pdf" target="_blank">PDF</a></li><li role="presentation"><a role="menuitem" href="/docs/dok/DOK00311.docx" target="_blank">Originalfil docx</a></li>
+                                                            
+                                                            
+                                                          </ul>
+                                                        </div>
+                        <p>
+
+
+Ek-varsel om revisjon – dato om 30 dager 5.7.25
+
+
+Kryssreferanser
+ 
+ 
+Eksterne referanser
+ 
+
+
+
+
+
+
+	
+</p>
+                            <small>Nord universitet/Testomr&#229;de</small>
+                    </div>
+                    <div class="col-sm-3">
+                        <ul class="list-unstyled">
+                            <li><i class="glyphicon glyphicon-file"></i> <small>D00311</small></li>
+                            <li><i class="glyphicon glyphicon-home"></i> <a href="#rpShowDynamicTree-1-59"><small>Testomr&#229;de</small></a></li>
+                        </ul>
+                    </div>
+                    <div class="col-sm-12">
+                        <hr style="margin-top:10px;" />
+                    </div>
+                </div>
+                <div class="row dksrf-all dksrf-doc dksrf-doct-10 dksrf-tk-00010701 dksrf-tk-02010202 dksrf-tk-03020801">
+                    <div class="col-sm-9">
+                        <a href="/docs/pub/DOK00203.docx" target="_blank" class="rp-search-result-heading">
+                            Melding om pr&#248;vetidsreglene_ENG
+                            <sup class="docstatus">  </sup>
+                        </a>
+                        
+                                                        <div class="dropdown" style="display: inline-block; margin-left: 5px;">
+                                                          <button class="btn btn-default dropdown-toggle btn-xs" type="button" role="button" title="Toggle Dropdown" aria-haspopup="true" aria-expanded="false" aria-label="Toggle Dropdown" id="rprsp-docdd-203" data-toggle="dropdown"><span class="caret"></span></button>
+                                                          <ul class="rprtc-docdropdown dropdown-menu" role="menu" aria-labelledby="rprsp-docdd-203">
+                                                            <li role="menuitem"><a href="#" onclick="rpDocumentPropertiesPopup(203, '/')">Dokumentegenskaper</a></li>
+                                                            <li class="divider" role="separator"></li>
+                                                            <li class="dropdown-header">Filformater</li><li role="presentation"><a role="menuitem" href="/docs/pub/DOK00203.docx" target="_blank">Word u/pass</a></li><li role="presentation"><a role="menuitem" href="/docs/pub/DOK00203.pdf" target="_blank">PDF</a></li><li role="presentation"><a role="menuitem" href="/docs/pub/DOK00203.htm" target="_blank">HTML-Mobil</a></li><li role="presentation"><a role="menuitem" href="/docs/dok/DOK00203.docx" target="_blank">Originalfil docx</a></li>
+                                                            
+                                                            
+                                                          </ul>
+                                                        </div>
+                        <p>Employees who are required to undergo a specific training are employed on probation until det training is completed or a <b>test</b> or exam is passed. If training is not completed in a satisfactory m</p>
+                            <small>Nord universitet/Nords kvalitetssystem/HR/Rekruttering</small>
+                    </div>
+                    <div class="col-sm-3">
+                        <ul class="list-unstyled">
+                            <li><i class="glyphicon glyphicon-file"></i> <small>D00203</small></li>
+                            <li><i class="glyphicon glyphicon-home"></i> <a href="#rpShowDynamicTree-1-40"><small>Rekruttering</small></a></li>
+                        </ul>
+                    </div>
+                    <div class="col-sm-12">
+                        <hr style="margin-top:10px;" />
+                    </div>
+                </div>
+                <div class="row dksrf-all dksrf-doc dksrf-doct-8 dksrf-tk-00010701 dksrf-tk-03020801">
+                    <div class="col-sm-9">
+                        <a href="/docs/pub/DOK00228.docx" target="_blank" class="rp-search-result-heading">
+                            Interview guide_2st interview
+                            <sup class="docstatus">  </sup>
+                        </a>
+                        
+                                                        <div class="dropdown" style="display: inline-block; margin-left: 5px;">
+                                                          <button class="btn btn-default dropdown-toggle btn-xs" type="button" role="button" title="Toggle Dropdown" aria-haspopup="true" aria-expanded="false" aria-label="Toggle Dropdown" id="rprsp-docdd-228" data-toggle="dropdown"><span class="caret"></span></button>
+                                                          <ul class="rprtc-docdropdown dropdown-menu" role="menu" aria-labelledby="rprsp-docdd-228">
+                                                            <li role="menuitem"><a href="#" onclick="rpDocumentPropertiesPopup(228, '/')">Dokumentegenskaper</a></li>
+                                                            <li class="divider" role="separator"></li>
+                                                            <li class="dropdown-header">Filformater</li><li role="presentation"><a role="menuitem" href="/docs/pub/DOK00228.docx" target="_blank">Word u/pass</a></li><li role="presentation"><a role="menuitem" href="/docs/pub/DOK00228.pdf" target="_blank">PDF</a></li><li role="presentation"><a role="menuitem" href="/docs/pub/DOK00228.htm" target="_blank">HTML-Mobil</a></li><li role="presentation"><a role="menuitem" href="/docs/dok/DOK00228.docx" target="_blank">Originalfil docx</a></li>
+                                                            
+                                                            
+                                                          </ul>
+                                                        </div>
+                        <p>When appointment for a scientific position, we normally in addition to the commission review, interview and reference check, also have a <b>test</b> lecture. Therefore – a second interview will be les</p>
+                            <small>Nord universitet/Nords kvalitetssystem/HR/Rekruttering</small>
+                    </div>
+                    <div class="col-sm-3">
+                        <ul class="list-unstyled">
+                            <li><i class="glyphicon glyphicon-file"></i> <small>D00228</small></li>
+                            <li><i class="glyphicon glyphicon-home"></i> <a href="#rpShowDynamicTree-1-40"><small>Rekruttering</small></a></li>
+                        </ul>
+                    </div>
+                    <div class="col-sm-12">
+                        <hr style="margin-top:10px;" />
+                    </div>
+                </div>
+                <div class="row dksrf-all dksrf-doc dksrf-doct-7 dksrf-tk-000111 dksrf-tk-030212">
+                    <div class="col-sm-9">
+                        <a href="/docs/pub/DOK00341.docx" target="_blank" class="rp-search-result-heading">
+                            Mal avtale om felles behandlingsansvar
+                            <sup class="docstatus">  </sup>
+                        </a>
+                        
+                                                        <div class="dropdown" style="display: inline-block; margin-left: 5px;">
+                                                          <button class="btn btn-default dropdown-toggle btn-xs" type="button" role="button" title="Toggle Dropdown" aria-haspopup="true" aria-expanded="false" aria-label="Toggle Dropdown" id="rprsp-docdd-341" data-toggle="dropdown"><span class="caret"></span></button>
+                                                          <ul class="rprtc-docdropdown dropdown-menu" role="menu" aria-labelledby="rprsp-docdd-341">
+                                                            <li role="menuitem"><a href="#" onclick="rpDocumentPropertiesPopup(341, '/')">Dokumentegenskaper</a></li>
+                                                            <li class="divider" role="separator"></li>
+                                                            <li class="dropdown-header">Filformater</li><li role="presentation"><a role="menuitem" href="/docs/pub/DOK00341.docx" target="_blank">Word</a></li><li role="presentation"><a role="menuitem" href="/docs/pub/DOK00341.pdf" target="_blank">PDF</a></li><li role="presentation"><a role="menuitem" href="/docs/pub/DOK00341.htm" target="_blank">HTML-Mobil</a></li><li role="presentation"><a role="menuitem" href="/docs/dok/DOK00341.docx" target="_blank">Originalfil docx</a></li>
+                                                            
+                                                            
+                                                          </ul>
+                                                        </div>
+                        <p>Det skal i tillegg omfatte rutiner for varsling av felles behandlingsansvarlige ved sikkerhetsbrudd og rutiner for <b>testing</b> av beredskaps- og kontinuitetsplaner. 
+Partene skal dokumentere sikkerhetsrevisjonene. </p>
+                            <small>Nord universitet/Nords kvalitetssystem/Informasjonssikkerhet og personvern​</small>
+                    </div>
+                    <div class="col-sm-3">
+                        <ul class="list-unstyled">
+                            <li><i class="glyphicon glyphicon-file"></i> <small>D00341</small></li>
+                            <li><i class="glyphicon glyphicon-home"></i> <a href="#rpShowDynamicTree-1-23"><small>Informasjonssikkerhet og personvern​</small></a></li>
+                        </ul>
+                    </div>
+                    <div class="col-sm-12">
+                        <hr style="margin-top:10px;" />
+                    </div>
+                </div>
+                <div class="row dksrf-all dksrf-doc dksrf-doct-7 dksrf-tk-000111 dksrf-tk-030212">
+                    <div class="col-sm-9">
+                        <a href="/docs/pub/DOK00345.docx" target="_blank" class="rp-search-result-heading">
+                            Mal databehandleravtale
+                            <sup class="docstatus">  </sup>
+                        </a>
+                        
+                                                        <div class="dropdown" style="display: inline-block; margin-left: 5px;">
+                                                          <button class="btn btn-default dropdown-toggle btn-xs" type="button" role="button" title="Toggle Dropdown" aria-haspopup="true" aria-expanded="false" aria-label="Toggle Dropdown" id="rprsp-docdd-345" data-toggle="dropdown"><span class="caret"></span></button>
+                                                          <ul class="rprtc-docdropdown dropdown-menu" role="menu" aria-labelledby="rprsp-docdd-345">
+                                                            <li role="menuitem"><a href="#" onclick="rpDocumentPropertiesPopup(345, '/')">Dokumentegenskaper</a></li>
+                                                            <li class="divider" role="separator"></li>
+                                                            <li class="dropdown-header">Filformater</li><li role="presentation"><a role="menuitem" href="/docs/pub/DOK00345.docx" target="_blank">Word</a></li><li role="presentation"><a role="menuitem" href="/docs/dok/DOK00345.docx" target="_blank">Originalfil docx</a></li>
+                                                            
+                                                            
+                                                          </ul>
+                                                        </div>
+                        <p>Det skal i tillegg omfatte rutiner for varsling av behandlingsansvarlig ved sikkerhetsbrudd og rutiner for <b>testing</b> av beredskaps- og kontinuitetsplaner. 
+Databehandler skal dokumentere sikkerhetsrevisjonene. </p>
+                            <small>Nord universitet/Nords kvalitetssystem/Informasjonssikkerhet og personvern​</small>
+                    </div>
+                    <div class="col-sm-3">
+                        <ul class="list-unstyled">
+                            <li><i class="glyphicon glyphicon-file"></i> <small>D00345</small></li>
+                            <li><i class="glyphicon glyphicon-home"></i> <a href="#rpShowDynamicTree-1-23"><small>Informasjonssikkerhet og personvern​</small></a></li>
+                        </ul>
+                    </div>
+                    <div class="col-sm-12">
+                        <hr style="margin-top:10px;" />
+                    </div>
+                </div>
+                <div class="row dksrf-all dksrf-doc dksrf-doct-1 dksrf-tk-00010705 dksrf-tk-02010203 dksrf-tk-02010303 dksrf-tk-03020805">
+                    <div class="col-sm-9">
+                        <a href="#rpShowDynamicModalDocument-165" target="_self" class="rp-search-result-heading">
+                            Study leave TA - staff
+                            <sup class="docstatus">  </sup>
+                        </a>
+                        
+                                                        <div class="dropdown" style="display: inline-block; margin-left: 5px;">
+                                                          <button class="btn btn-default dropdown-toggle btn-xs" type="button" role="button" title="Toggle Dropdown" aria-haspopup="true" aria-expanded="false" aria-label="Toggle Dropdown" id="rprsp-docdd-165" data-toggle="dropdown"><span class="caret"></span></button>
+                                                          <ul class="rprtc-docdropdown dropdown-menu" role="menu" aria-labelledby="rprsp-docdd-165">
+                                                            <li role="menuitem"><a href="#" onclick="rpDocumentPropertiesPopup(165, '/')">Dokumentegenskaper</a></li>
+                                                            <li class="divider" role="separator"></li>
+                                                            <li class="dropdown-header">Filformater</li><li role="presentation"><a role="menuitem" href="/docs/pub/DOK00165.htm" target="_blank">HTML-Mobil</a></li><li role="presentation"><a role="menuitem" href="/docs/pub/DOK00165.docx" target="_blank">Word u/pass</a></li><li role="presentation"><a role="menuitem" href="/docs/pub/DOK00165.pdf" target="_blank">PDF</a></li><li role="presentation"><a role="menuitem" href="/docs/dok/DOK00165.docx" target="_blank">Originalfil docx</a></li>
+                                                            
+                                                            
+                                                          </ul>
+                                                        </div>
+                        <p>s with public defence, etc. as these are usually considered to be a method of study and not a final <b>test</b> corresponding to an examination" 
+A master’s thesis must be delivered on specific dates</p>
+                            <small>Nord universitet/Nords kvalitetssystem/HR/Medarbeiderutvikling</small>
+                    </div>
+                    <div class="col-sm-3">
+                        <ul class="list-unstyled">
+                            <li><i class="glyphicon glyphicon-file"></i> <small>D00165</small></li>
+                            <li><i class="glyphicon glyphicon-home"></i> <a href="#rpShowDynamicTree-1-58"><small>Medarbeiderutvikling</small></a></li>
+                        </ul>
+                    </div>
+                    <div class="col-sm-12">
+                        <hr style="margin-top:10px;" />
+                    </div>
+                </div>
+                <div class="row dksrf-all dksrf-doc dksrf-doct-7 dksrf-tk-000111 dksrf-tk-030212">
+                    <div class="col-sm-9">
+                        <a href="/docs/pub/DOK00344.docx" target="_blank" class="rp-search-result-heading">
+                            Mal databehandleravtale (engelsk)
+                            <sup class="docstatus">  </sup>
+                        </a>
+                        
+                                                        <div class="dropdown" style="display: inline-block; margin-left: 5px;">
+                                                          <button class="btn btn-default dropdown-toggle btn-xs" type="button" role="button" title="Toggle Dropdown" aria-haspopup="true" aria-expanded="false" aria-label="Toggle Dropdown" id="rprsp-docdd-344" data-toggle="dropdown"><span class="caret"></span></button>
+                                                          <ul class="rprtc-docdropdown dropdown-menu" role="menu" aria-labelledby="rprsp-docdd-344">
+                                                            <li role="menuitem"><a href="#" onclick="rpDocumentPropertiesPopup(344, '/')">Dokumentegenskaper</a></li>
+                                                            <li class="divider" role="separator"></li>
+                                                            <li class="dropdown-header">Filformater</li><li role="presentation"><a role="menuitem" href="/docs/pub/DOK00344.docx" target="_blank">Word u/pass</a></li><li role="presentation"><a role="menuitem" href="/docs/dok/DOK00344.docx" target="_blank">Originalfil docx</a></li>
+                                                            
+                                                            
+                                                          </ul>
+                                                        </div>
+                        <p>It will also include routines for warning the data controller in the event of security breaches, and routines for <b>testing</b> of emergency and continuity plans. 
+The data processor will document the security audits. </p>
+                            <small>Nord universitet/Nords kvalitetssystem/Informasjonssikkerhet og personvern​</small>
+                    </div>
+                    <div class="col-sm-3">
+                        <ul class="list-unstyled">
+                            <li><i class="glyphicon glyphicon-file"></i> <small>D00344</small></li>
+                            <li><i class="glyphicon glyphicon-home"></i> <a href="#rpShowDynamicTree-1-23"><small>Informasjonssikkerhet og personvern​</small></a></li>
+                        </ul>
+                    </div>
+                    <div class="col-sm-12">
+                        <hr style="margin-top:10px;" />
+                    </div>
+                </div>
+                <div class="row dksrf-all dksrf-doc dksrf-doct-1 dksrf-tk-00010701 dksrf-tk-02010102 dksrf-tk-03020801">
+                    <div class="col-sm-9">
+                        <a href="#rpShowDynamicModalDocument-242" target="_self" class="rp-search-result-heading">
+                            Guidelines for documentatioen of educational competence_revised
+                            <sup class="docstatus">  </sup>
+                        </a>
+                        
+                                                        <div class="dropdown" style="display: inline-block; margin-left: 5px;">
+                                                          <button class="btn btn-default dropdown-toggle btn-xs" type="button" role="button" title="Toggle Dropdown" aria-haspopup="true" aria-expanded="false" aria-label="Toggle Dropdown" id="rprsp-docdd-242" data-toggle="dropdown"><span class="caret"></span></button>
+                                                          <ul class="rprtc-docdropdown dropdown-menu" role="menu" aria-labelledby="rprsp-docdd-242">
+                                                            <li role="menuitem"><a href="#" onclick="rpDocumentPropertiesPopup(242, '/')">Dokumentegenskaper</a></li>
+                                                            <li class="divider" role="separator"></li>
+                                                            <li class="dropdown-header">Filformater</li><li role="presentation"><a role="menuitem" href="/docs/pub/DOK00242.htm" target="_blank">HTML-Mobil</a></li><li role="presentation"><a role="menuitem" href="/docs/pub/DOK00242.pdf" target="_blank">PDF</a></li><li role="presentation"><a role="menuitem" href="/docs/dok/DOK00242.docx" target="_blank">Originalfil docx</a></li>
+                                                            
+                                                            
+                                                          </ul>
+                                                        </div>
+                        <p>nd supervision, including course evaluation
+§ follow-up of evaluation of the programme of study
+§ <b>testing</b> of various teaching forms and activities and forms of assessment, including digital, </p>
+                            <small>Nord universitet/Nords kvalitetssystem/HR/Rekruttering</small>
+                    </div>
+                    <div class="col-sm-3">
+                        <ul class="list-unstyled">
+                            <li><i class="glyphicon glyphicon-file"></i> <small>D00242</small></li>
+                            <li><i class="glyphicon glyphicon-home"></i> <a href="#rpShowDynamicTree-1-40"><small>Rekruttering</small></a></li>
+                        </ul>
+                    </div>
+                    <div class="col-sm-12">
+                        <hr style="margin-top:10px;" />
+                    </div>
+                </div>
+                <div class="row dksrf-all dksrf-doc dksrf-doct-7 dksrf-tk-000111 dksrf-tk-030212">
+                    <div class="col-sm-9">
+                        <a href="/docs/pub/DOK00346.docx" target="_blank" class="rp-search-result-heading">
+                            Mal Avtale om felles behandlingsansvar (engelsk)
+                            <sup class="docstatus">  </sup>
+                        </a>
+                        
+                                                        <div class="dropdown" style="display: inline-block; margin-left: 5px;">
+                                                          <button class="btn btn-default dropdown-toggle btn-xs" type="button" role="button" title="Toggle Dropdown" aria-haspopup="true" aria-expanded="false" aria-label="Toggle Dropdown" id="rprsp-docdd-346" data-toggle="dropdown"><span class="caret"></span></button>
+                                                          <ul class="rprtc-docdropdown dropdown-menu" role="menu" aria-labelledby="rprsp-docdd-346">
+                                                            <li role="menuitem"><a href="#" onclick="rpDocumentPropertiesPopup(346, '/')">Dokumentegenskaper</a></li>
+                                                            <li class="divider" role="separator"></li>
+                                                            <li class="dropdown-header">Filformater</li><li role="presentation"><a role="menuitem" href="/docs/pub/DOK00346.docx" target="_blank">Word</a></li><li role="presentation"><a role="menuitem" href="/docs/dok/DOK00346.docx" target="_blank">Originalfil docx</a></li>
+                                                            
+                                                            
+                                                          </ul>
+                                                        </div>
+                        <p>It shall also include routines for notification of joint controllers in the event of security breaches and routines for <b>testing</b> of contingency and continuity plans.
+The parties shall document the security audits. </p>
+                            <small>Nord universitet/Nords kvalitetssystem/Informasjonssikkerhet og personvern​</small>
+                    </div>
+                    <div class="col-sm-3">
+                        <ul class="list-unstyled">
+                            <li><i class="glyphicon glyphicon-file"></i> <small>D00346</small></li>
+                            <li><i class="glyphicon glyphicon-home"></i> <a href="#rpShowDynamicTree-1-23"><small>Informasjonssikkerhet og personvern​</small></a></li>
+                        </ul>
+                    </div>
+                    <div class="col-sm-12">
+                        <hr style="margin-top:10px;" />
+                    </div>
+                </div>
+    </main>
+</div>
+
+ 
+                </div>
+            </div>
+        </div>
+    </div>
+
+<input type="hidden" id="master_rpmainid" value="1" />
+<input type="hidden" id="master_rppageid" value="32" />
+<input type="hidden" id="master_rpitemid" value="35" />
+
+
+
+
+
+    <script src="/Scripts/jquery-3.5.1.min.js?Ver=20605"></script>
+    <script src="/script/ResponsivePortal/3Party/bootstrap-3.3.7-dist/js/bootstrap.min.js?Ver=20605"></script>
+
+    <script src="/Areas/Shell/Scripts/CommonShell.js?Ver=20605"></script>
+    <script>
+        let ekLang = "nb";
+        if (ekLang == null || ekLang == undefined || ekLang == "")
+            ekLang = "no";
+
+        if (ekLang == "nb")
+        {
+            ekLang = "no";
+        }
+    </script>
+    <script src="/script/Common/i18next.min.js"></script>
+    <script type="module" src="/Areas/Shell/Scripts/Language.js?Ver=20605"></script>
+
+    <script src="/Areas/Shell/Scripts/StructNodeSelector.js?Ver=20605"></script>
+
+
+    <script src="/Script/Delta/Common.js" type="text/javascript"></script> <!-- [HBE-MOCKUP] -->
+    <script src="/Script/ResponsivePortal/Common.js?Ver=20605" type="text/javascript"></script>
+    
+    
+    <script type="text/javascript" src="/script/EK/portal/search.js?Ver=20605"></script>
+
+
+    <input type="hidden" id="shRootPath" value="/" />
+</body>
+</html>

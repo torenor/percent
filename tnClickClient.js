@@ -106,3 +106,122 @@ if (document.readyState === 'complete' || document.readyState === 'interactive')
 } else {
     document.addEventListener('DOMContentLoaded', setupDynamicTracking, { once: true });
 }
+
+// --- Modal-specific helpers and polling fallback ---
+// Configure polling and debug here
+const DEBUG_TRACKING = false; // set true to enable verbose console.debug
+const POLLING_ENABLED = true; // fallback polling if other signals fail
+const POLL_INTERVAL_MS = 800;
+
+// Delegated click handler for links that open the dynamic modal in this app
+document.addEventListener('click', (ev) => {
+    try {
+        const a = ev.target.closest && ev.target.closest('a[href^="#rpShowDynamicModalDocument-"] , a.rp-search-result-heading');
+        if (a) {
+            if (DEBUG_TRACKING) console.debug('Modal-trigger link clicked:', a.href || a.getAttribute('href'));
+            // schedule a send shortly after click to allow modal content to be injected
+            setTimeout(scheduleSend, 300);
+        }
+    } catch (e) {
+        if (DEBUG_TRACKING) console.debug('click handler error', e);
+    }
+}, true);
+
+// Listen for Bootstrap modal shown event. Bootstrap uses jQuery events; attach via jQuery if present.
+if (window.jQuery) {
+    try {
+        window.jQuery(document).on('shown.bs.modal', '.modal', function () {
+            if (DEBUG_TRACKING) console.debug('shown.bs.modal event (jQuery)');
+            scheduleSend();
+        });
+    } catch (e) {
+        if (DEBUG_TRACKING) console.debug('jQuery modal listener error', e);
+    }
+} else {
+    // Some implementations may dispatch a native event - listen defensively
+    document.addEventListener('shown.bs.modal', () => {
+        if (DEBUG_TRACKING) console.debug('shown.bs.modal event (native)');
+        scheduleSend();
+    });
+}
+
+// MutationObserver specifically watching for added modal nodes (class 'modal' or role='dialog')
+const modalNodeObserver = new MutationObserver((mutations) => {
+    for (const m of mutations) {
+        if (m.addedNodes && m.addedNodes.length) {
+            for (const n of m.addedNodes) {
+                if (n && n.nodeType === 1) {
+                    const el = /** @type HTMLElement */ (n);
+                    if (el.classList && (el.classList.contains('modal') || el.getAttribute('role') === 'dialog' || el.querySelector && el.querySelector('.modal'))) {
+                        if (DEBUG_TRACKING) console.debug('Modal node added to DOM', el);
+                        scheduleSend();
+                        return;
+                    }
+                }
+            }
+        }
+    }
+});
+try {
+    modalNodeObserver.observe(document.body || document.documentElement, { childList: true, subtree: true });
+} catch (e) {
+    if (DEBUG_TRACKING) console.debug('modalNodeObserver failed to observe', e);
+}
+
+// Polling fallback: detect changes in modal visibility or content if other signals miss it
+if (POLLING_ENABLED) {
+    let lastModalSnapshot = '';
+    setInterval(() => {
+        try {
+            const modal = document.querySelector('.modal.in, .modal.show, [role="dialog"]');
+            const snapshot = modal ? (modal.textContent || modal.innerText || '') : '';
+            if (snapshot && snapshot !== lastModalSnapshot) {
+                if (DEBUG_TRACKING) console.debug('Modal snapshot changed (polling)');
+                lastModalSnapshot = snapshot;
+                scheduleSend();
+            }
+        } catch (e) {
+            if (DEBUG_TRACKING) console.debug('polling error', e);
+        }
+    }, POLL_INTERVAL_MS);
+}
+
+// --- Wrap known popup-opening globals (if the app uses functions to open modals) ---
+const wrapGlobalPopupFns = (fnNames = ['rpShowDynamicModalDocument', 'rpDocumentPropertiesPopup']) => {
+    const tryWrap = (name, attempts = 0) => {
+        const maxAttempts = 50;
+        const delay = 200;
+        try {
+            const original = window[name];
+            if (typeof original === 'function') {
+                window[name] = function (...args) {
+                    if (DEBUG_TRACKING) console.debug(`Wrapped ${name} called with`, args);
+                    try {
+                        const res = original.apply(this, args);
+                        // schedule send shortly after the function runs so modal content can be injected
+                        setTimeout(scheduleSend, 300);
+                        return res;
+                    } catch (e) {
+                        if (DEBUG_TRACKING) console.debug(`Error calling original ${name}:`, e);
+                        setTimeout(scheduleSend, 300);
+                        throw e;
+                    }
+                };
+                if (DEBUG_TRACKING) console.debug(`Wrapped global function: ${name}`);
+                return true;
+            }
+        } catch (e) {
+            if (DEBUG_TRACKING) console.debug('wrapGlobalPopupFns error', e);
+        }
+        if (attempts < maxAttempts) {
+            setTimeout(() => tryWrap(name, attempts + 1), delay);
+        } else {
+            if (DEBUG_TRACKING) console.debug(`Giving up wrapping ${name} after ${maxAttempts} attempts`);
+        }
+    };
+
+    for (const n of fnNames) tryWrap(n);
+};
+
+// Try to wrap known popup handlers used in the portal
+wrapGlobalPopupFns();
