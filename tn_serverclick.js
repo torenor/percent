@@ -6,8 +6,8 @@ const path = require('path');
 const app = express();
 const port = 3000;
 
-// Path to the CSV file
-const logDir = path.join(__dirname, 'clicklog');
+// Path to the CSV file (store logs on D:\clicklog)
+const logDir = path.join('D:', 'clicklog');
 
 // Create the log directory if it doesn't exist
 if (!fs.existsSync(logDir)) {
