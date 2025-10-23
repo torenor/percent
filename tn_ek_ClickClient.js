@@ -1,3 +1,14 @@
+// 7. Make Endpoint Configurable
+const getEndpoint = () => {
+    const scriptTag = document.currentScript;
+    if (scriptTag && scriptTag.dataset.endpoint) {
+        return scriptTag.dataset.endpoint;
+    }
+    // Fallback to a default
+    return 'https://uncelibate-malisa-limy.ngrok-free.dev/api/track-page-view';
+};
+const endpoint = getEndpoint();
+
 const collectPageData = () => {
     const pageUrl = window.location.href;
     const h1Text = document.querySelector('h1')?.textContent?.trim() || '';
@@ -5,7 +16,7 @@ const collectPageData = () => {
     const clickTime = new Date().toISOString();
     return { pageUrl, clickTime, pageTitle, h1Text };
 };
-const endpoint = 'https://uncelibate-malisa-limy.ngrok-free.dev/api/track-page-view';
+
 let lastSent = { pageUrl: null, pageTitle: null, h1Text: null };
 let sendTimer = null;
 const DEBOUNCE_MS = 500;
@@ -31,35 +42,26 @@ const shouldSend = (d) => {
     return d.pageUrl !== lastSent.pageUrl || d.pageTitle !== lastSent.pageTitle || d.h1Text !== lastSent.h1Text;
 };
 
+// 1. Reduce Redundant Data Collection in scheduleSend
 const scheduleSend = () => {
-    const data = collectPageData();
-    if (!shouldSend(data)) return; 
-    if (sendTimer) clearTimeout(sendTimer);
+    if (sendTimer) {
+        clearTimeout(sendTimer);
+    }
     sendTimer = setTimeout(() => {
         sendTimer = null;
-        const payload = collectPageData(); 
-        if (shouldSend(payload)) csvPost(payload);
+        const payload = collectPageData();
+        if (shouldSend(payload)) {
+            csvPost(payload);
+        }
     }, DEBOUNCE_MS);
 };
 
-const runWhenReady = () => {
-    try {
-        trackPageView();
-    } catch (e) {
-        console.error('trackPageView failed:', e);
-    }
-};
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', runWhenReady, { once: true });
-} else {
-    runWhenReady();
-}
-
 const setupDynamicTracking = () => {
+    // 3. Scope MutationObserver More Narrowly
     const observer = new MutationObserver((mutations) => {
         for (const m of mutations) {
-            if (m.type === 'childList' || m.type === 'characterData' || m.type === 'subtree') {
+            // Watching for childList changes is generally safer and more performant than characterData.
+            if (m.type === 'childList' || m.type === 'subtree') {
                 scheduleSend();
                 break;
             }
@@ -67,11 +69,13 @@ const setupDynamicTracking = () => {
     });
 
     if (document.body) {
-        observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+        // Observing subtree is still necessary for many dynamic sites, but characterData is removed for performance.
+        observer.observe(document.body, { childList: true, subtree: true });
     }
 
     const titleEl = document.querySelector('title');
     if (titleEl) {
+        // Title changes are important and less frequent.
         observer.observe(titleEl, { childList: true, characterData: true, subtree: true });
     }
 
@@ -83,18 +87,10 @@ const setupDynamicTracking = () => {
         if (document.visibilityState === 'visible') scheduleSend();
     });
 
-    scheduleSend();
+    scheduleSend(); // Initial send on load
 };
 
-if (document.readyState === 'complete' || document.readyState === 'interactive') {
-    setupDynamicTracking();
-} else {
-    document.addEventListener('DOMContentLoaded', setupDynamicTracking, { once: true });
-}
-
-const POLLING_ENABLED = true; 
-const POLL_INTERVAL_MS = 2000;
-
+// 5. Improve Error Handling
 document.addEventListener('click', (ev) => {
     try {
         const a = ev.target.closest && ev.target.closest('a[href^="#rpShowDynamicModalDocument-"] , a.rp-search-result-heading');
@@ -102,55 +98,39 @@ document.addEventListener('click', (ev) => {
             setTimeout(scheduleSend, 300);
         }
     } catch (e) {
+        console.error('Error in click listener:', e);
     }
 }, true);
 
-if (window.jQuery) {
-    try {
-        window.jQuery(document).on('shown.bs.modal', '.modal', function () {
-            scheduleSend();
-        });
-    } catch (e) {
-    }
-} else {
-    document.addEventListener('shown.bs.modal', () => {
-        scheduleSend();
-    });
-}
+// 4. Remove jQuery Dependency
+document.addEventListener('shown.bs.modal', () => {
+    scheduleSend();
+});
 
+// 2. Replace Polling with MutationObserver
 const modalNodeObserver = new MutationObserver((mutations) => {
     for (const m of mutations) {
         if (m.addedNodes && m.addedNodes.length) {
             for (const n of m.addedNodes) {
                 if (n && n.nodeType === 1) {
-                    const el =  (n);
+                    const el = (n);
                     if (el.classList && (el.classList.contains('modal') || el.getAttribute('role') === 'dialog' || el.querySelector && el.querySelector('.modal'))) {
                         scheduleSend();
-                        return;
+                        // Once a modal is found, observe it for internal changes, replacing the need for polling.
+                        const modalContentObserver = new MutationObserver(scheduleSend);
+                        modalContentObserver.observe(el, { childList: true, subtree: true, characterData: true });
+                        return; // Stop searching after finding and observing the modal
                     }
                 }
             }
         }
     }
 });
+
 try {
     modalNodeObserver.observe(document.body || document.documentElement, { childList: true, subtree: true });
 } catch (e) {
-}
-
-if (POLLING_ENABLED) {
-    let lastModalSnapshot = '';
-    setInterval(() => {
-        try {
-            const modal = document.querySelector('.modal.in, .modal.show, [role="dialog"]');
-            const snapshot = modal ? (modal.textContent || modal.innerText || '') : '';
-            if (snapshot && snapshot !== lastModalSnapshot) {
-                lastModalSnapshot = snapshot;
-                scheduleSend();
-            }
-        } catch (e) {
-        }
-    }, POLL_INTERVAL_MS);
+    console.error('Failed to initialize modalNodeObserver:', e);
 }
 
 const wrapGlobalPopupFns = (fnNames = ['rpShowDynamicModalDocument', 'rpDocumentPropertiesPopup']) => {
@@ -166,21 +146,40 @@ const wrapGlobalPopupFns = (fnNames = ['rpShowDynamicModalDocument', 'rpDocument
                         setTimeout(scheduleSend, 300);
                         return res;
                     } catch (e) {
+                        // Still schedule a send even if the original function fails.
                         setTimeout(scheduleSend, 300);
-                        throw e;
+                        throw e; // Re-throw the error after scheduling.
                     }
                 };
                 return true;
             }
         } catch (e) {
+            console.error(`Failed to wrap function ${name}:`, e);
         }
+
         if (attempts < maxAttempts) {
             setTimeout(() => tryWrap(name, attempts + 1), delay);
-        } else {
         }
     };
 
     for (const n of fnNames) tryWrap(n);
 };
 
-wrapGlobalPopupFns();
+// 6. Consolidate DOM-Ready Execution
+const initializeTracking = () => {
+    try {
+        // The 'trackPageView' function is not defined in the original script.
+        // If it exists globally, it would be called here.
+        // trackPageView();
+    } catch (e) {
+        console.error('trackPageView failed:', e);
+    }
+    setupDynamicTracking();
+    wrapGlobalPopupFns();
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeTracking, { once: true });
+} else {
+    initializeTracking();
+}
