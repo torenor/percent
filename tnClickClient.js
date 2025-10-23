@@ -2,7 +2,8 @@
 const trackPageView = async () => {
     // 1. Capture the required data
     const pageUrl = window.location.href;       // Get the full URL of the current page
-    const pageTitle = document.title;          // Get the title of the current page
+    //const pageTitle = document.title;          // Get the title of the current page
+    const pageTitle = document.querySelector('h1');
     const clickTime = new Date().toISOString(); // Get the current time in ISO format
 
     const data = {
