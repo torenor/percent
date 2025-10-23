@@ -6,7 +6,7 @@ const collectPageData = () => {
     const clickTime = new Date().toISOString();
     return { pageUrl, clickTime, pageTitle, h1Text };
 };
-
+// change detection
 // Debounced sender with change-detection to avoid duplicate posts
 const endpoint = 'https://uncelibate-malisa-limy.ngrok-free.dev/api/track-page-view';
 let lastSent = { pageUrl: null, pageTitle: null, h1Text: null };
