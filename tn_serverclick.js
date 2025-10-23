@@ -21,8 +21,8 @@ const day = String(today.getDate()).padStart(2, '0');
 const dateString = `${year}-${month}-${day}`;
 const CSV_FILE = path.join(logDir, `${dateString}_clicked_data.csv`);
 
-// CSV Headers
-const CSV_HEADERS = "clickTime,pageUrl,pageTitle\n";
+// CSV Headers (added h1Text as a separate column)
+const CSV_HEADERS = "clickTime,pageUrl,h1Text,pageTitle\n";
 
 app.use(cors()); // Enable CORS for all requests
 app.use(express.json()); // Middleware to parse JSON body
@@ -86,7 +86,7 @@ const ensureCsvHeaders = () => {
 
 // --- API Endpoint to receive the data ---
 app.post('/api/track-page-view', (req, res) => {
-    const { pageUrl, clickTime, pageTitle } = req.body;
+    const { pageUrl, clickTime, pageTitle, h1Text } = req.body;
 
     if (!pageUrl || !clickTime) {
         return res.status(400).send({ message: 'Missing pageUrl or clickTime in request.' });
@@ -96,8 +96,9 @@ app.post('/api/track-page-view', (req, res) => {
     ensureCsvHeaders();
 
     // 2. Convert values to text and escape for CSV
+    const h1TextClean = truncate(valueToText(h1Text), 500);
     const titleText = truncate(valueToText(pageTitle), 500);
-    const newEntry = `"${csvEscape(clickTime)}","${csvEscape(pageUrl)}","${csvEscape(titleText)}"\n`;
+    const newEntry = `"${csvEscape(clickTime)}","${csvEscape(pageUrl)}","${csvEscape(h1TextClean)}","${csvEscape(titleText)}"\n`;
 
     // 3. Append the data to the CSV file
     fs.appendFile(CSV_FILE, newEntry, { encoding: 'utf8' }, (err) => {

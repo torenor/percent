@@ -2,15 +2,17 @@
 const trackPageView = async () => {
     // 1. Capture the required data
     const pageUrl = window.location.href;       // Get the full URL of the current page
-    // Prefer the first <h1> text if present, otherwise fall back to document.title
-    // Use optional chaining to avoid null dereference and trim whitespace
-    const pageTitle = document.querySelector('h1')?.textContent?.trim() || document.title;
+    // Capture both the first <h1> text AND the document.title separately
+    // h1Text will be empty string if no <h1> exists
+    const h1Text = document.querySelector('h1')?.textContent?.trim() || '';
+    const pageTitle = document.title || '';
     const clickTime = new Date().toISOString(); // Get the current time in ISO format
 
     const data = {
         pageUrl: pageUrl,
         clickTime: clickTime,
-        pageTitle: pageTitle
+        pageTitle: pageTitle,
+        h1Text: h1Text
     };
     
     // NOTE: This endpoint must match your server's route
