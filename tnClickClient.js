@@ -38,6 +38,17 @@ const trackPageView = async () => {
     }
 };
 
-// Execute the function immediately when the script is loaded
-// This effectively tracks the "click" of opening the URL/page
-trackPageView();
+// Execute the function when DOM is ready. If the DOM is already loaded, run immediately.
+const runWhenReady = () => {
+    try {
+        trackPageView();
+    } catch (e) {
+        console.error('trackPageView failed:', e);
+    }
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', runWhenReady, { once: true });
+} else {
+    runWhenReady();
+}
