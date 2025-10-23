@@ -92,7 +92,6 @@ if (document.readyState === 'complete' || document.readyState === 'interactive')
     document.addEventListener('DOMContentLoaded', setupDynamicTracking, { once: true });
 }
 
-const DEBUG_TRACKING = false; 
 const POLLING_ENABLED = true; 
 const POLL_INTERVAL_MS = 2000;
 
