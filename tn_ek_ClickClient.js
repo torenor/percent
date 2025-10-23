@@ -111,7 +111,7 @@ if (document.readyState === 'complete' || document.readyState === 'interactive')
 // Configure polling and debug here
 const DEBUG_TRACKING = false; // set true to enable verbose console.debug
 const POLLING_ENABLED = true; // fallback polling if other signals fail
-const POLL_INTERVAL_MS = 800;
+const POLL_INTERVAL_MS = 2000;
 
 // Delegated click handler for links that open the dynamic modal in this app
 document.addEventListener('click', (ev) => {
