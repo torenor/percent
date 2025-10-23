@@ -1,0 +1,72 @@
+Recommendations to optimize `tn_ek_ClickClient.js` for production
+
+Summary
+- Remove or gate verbose console output in production builds.
+- Replace ad-hoc console calls with a small logger wrapper controlled by a runtime or build-time flag.
+- Prefer non-blocking telemetry (navigator.sendBeacon) for unload events.
+- Reduce and scope MutationObserver and polling usage to limit CPU and memory overhead.
+- Strip console.* calls in production builds using your bundler/minifier.
+
+Quick wins (apply immediately)
+1) Add a lightweight logger wrapper near the top of the file so a single flag controls debug output. In production the logger can be silenced while still allowing errors to be recorded or forwarded to remote monitoring.
+2) Replace the single unguarded console.log("Page view data sent successfully.", data) with the logger so it is suppressed in production.
+3) Keep the DEBUG_TRACKING flag configurable via a small runtime variable (e.g., window.__TRACKING_DEBUG__).
+
+Build-time removals
+- If you use Babel: install and configure `babel-plugin-transform-remove-console` (or `transform-remove-console`) to strip console calls during production builds. Configure it to remove only non-error console calls if you want to keep console.error.
+- If you use webpack + Terser: set terserOptions.compress.drop_console = true in production to drop console.* calls entirely. Also set DefinePlugin to 'production' to allow dead-code elimination.
+
+Runtime/logging changes
+- Logger wrapper pattern (suggestion):
+  - Provide a single boolean to enable debug (from window.__TRACKING_DEBUG__ or derived from NODE_ENV-like flag).
+  - Expose logger.debug/info/log/warn/error. Debug/info/log call through the wrapper only when enabled; keep error always visible or send to remote.
+- Example runtime flag resolution: prefer a window flag for non-bundled scripts or use build-time DEFINE replacement for bundled assets.
+- Consider sending errors to a remote collector (Sentry, LogRocket) instead of printing raw stacks to console in production.
+
+Reducing runtime overhead
+- Narrow MutationObserver scope: observe only the element(s) that host dynamic content or modals instead of document.body subtree. Observing entire body is expensive on dynamic apps.
+- Debounce the MutationObserver callback; ignore unrelated mutations early (e.g., check if mutation.target matches selectors of interest).
+- Reduce polling: set a longer interval (e.g., 2000ms) or enable polling only as a short-lived fallback (stop after N seconds if nothing detected). Polling indefinitely at 800ms can be costly on busy pages.
+- Make snapshot comparisons lightweight: limit snapshot length (slice first N chars) or compute a small hash instead of comparing entire textContent.
+- Avoid redundant DOM queries: in scheduleSend(), collectPageData() is called multiple times; capture values once per invocation when possible.
+
+Event listeners and memory
+- Use `{ once: true }` where appropriate for single-use listeners.
+- Remove observers/listeners on teardown if your script can be re-initialized or unloaded in single-page apps.
+- Use passive listeners for scroll/touch events to avoid blocking the main thread.
+
+Telemetry and network
+- Use `navigator.sendBeacon` for fire-and-forget telemetry tied to unload or visibility changes; fallback to fetch when necessary.
+- Put the analytics `endpoint` in a runtime configuration (not hard-coded) so it can be rotated or changed without code edits.
+- Consider batching frequent events and sending in a single request to reduce network overhead.
+
+Security and privacy
+- Avoid sending PII. Trim or anonymize any user content before sending.
+- Serve the script via HTTPS and authenticate or sign telemetry to prevent abuse if needed.
+- Do not serve source-maps publicly in production; upload them privately to your error tracking service.
+
+Packaging and deployment
+- Build and minify for production. Serve from a CDN and use cache headers.
+- Use Subresource Integrity (SRI) if loading third-party scripts from CDNs.
+
+Testing and monitoring
+- Profile with Lighthouse and browser devtools to confirm observers and polling are not causing high CPU.
+- Add a couple of unit tests for pure functions (collectPageData, shouldSend) and one integration test that mocks fetch/sendBeacon.
+- Use a bundle analyzer to find large dependencies and track bundle size regressions.
+
+Suggested minimal code changes (low-risk)
+1) Insert a logger wrapper and swap the unguarded console.log:
+   - Keep console.error calls, but route non-critical logs through logger so they can be disabled.
+2) Limit polling lifetime. Example behavior: enable polling for the first 30 seconds after page load, then turn it off unless some flag re-enables it.
+
+How to apply
+- If you maintain a bundler: add the babel plugin or configure Terser in production and set process.env.NODE_ENV via DefinePlugin.
+- If you don't use a bundler: add the logger wrapper and use `window.__TRACKING_DEBUG__ = true` during testing; set it false in production.
+
+Next steps I can take for you (pick one):
+- Apply a small safe patch that inserts the logger wrapper and replaces the single unguarded console.log with logger.info in `tn_ek_ClickClient.js`.
+- Produce sample `webpack.config.js` and `babel.config.json` snippets to strip console.* calls in production builds.
+- Implement a polling fallback that auto-disables after N seconds and reduce MutationObserver scope.
+
+---
+File created at: c:\tpoll\percent\tn_ek_ClickClient_recommendations.txt
