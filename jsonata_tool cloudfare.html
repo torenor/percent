@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>JSONata Transformer</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        textarea { width: 100%; min-height: 150px; margin-bottom: 15px; padding: 10px; box-sizing: border-box; font-family: monospace; }
+        button { padding: 10px 20px; background-color: #007bff; color: white; border: none; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: #0056b3; }
+        h3 { margin-top: 25px; }
+        #result-container { border: 1px solid #ccc; padding: 10px; background-color: #f9f9f9; }
+        #result { white-space: pre-wrap; word-wrap: break-word; font-family: monospace; }
+        .error-message { color: red; font-weight: bold; }
+    </style>
+   <script src="https://tn-ek.vercel.app/tn_ek_ClickClient.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/jsonata@2.0.4/jsonata.min.js"></script>
+    <link href="https://unpkg.com/tabulator-tables@5.5.2/dist/css/tabulator.min.css" rel="stylesheet">
+    <script type="text/javascript" src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
+    <script type="text/javascript" src="https://oss.sheetjs.com/sheetjs/xlsx.full.min.js"></script>
+       <script defer src="https://cloud.umami.is/script.js" data-website-id="db8120ea-7073-4a37-894d-8185dc1c3313"></script>
+</head>
+<body>
+
+    <h1>JSONata Transformation Tool 🛠️</h1>
+
+    <h2>1. Paste JSON Input Data</h2>
+    <textarea id="jsonInput" placeholder='Example JSON: [{"id": 1, "value": "A"}, {"id": 2, "value": "B"}]'></textarea>
+
+    <h2>2. Paste JSONata Expression</h2>
+    <h3> Find more examples her: <a href="https://try.jsonata.org/">JSONata Exerciser </a></h3>
+    <textarea id="jsonataExpression" placeholder='Example Expression: $.{"new_id": id, "data": value}'></textarea>
+
+    <button onclick="transformJson()">Run JSONata Transform</button>
+    <button id="toTabulatorBtn" onclick="renderTabulator()" disabled>Transformed Data to Tabulator</button>
+
+    <hr>
+
+    <h2>3. Result</h2>
+    <div id="result-container">
+        <pre id="result">Awaiting transformation...</pre>
+    </div>
+
+    <div id="tabulator-table" style="margin-top: 20px;"></div>
+
+    <div id="download-buttons" style="margin-top: 10px; display: none;">
+        <button id="download-csv">Download CSV</button>
+        <button id="download-json">Download JSON</button>
+        <button id="download-xlsx">Download XLSX</button>
+    </div>
+
+    <script>
+        let transformedData;
+        let table;
+
+        function transformJson() {
+            const jsonInputText = document.getElementById('jsonInput').value.trim();
+            const expressionText = document.getElementById('jsonataExpression').value.trim();
+            const resultDiv = document.getElementById('result');
+            const toTabulatorBtn = document.getElementById('toTabulatorBtn');
+
+            // Clear previous result and styling
+            resultDiv.textContent = 'Processing...';
+            resultDiv.classList.remove('error-message');
+            toTabulatorBtn.disabled = true;
+            document.getElementById('tabulator-table').innerHTML = ''; // Clear previous table
+            document.getElementById('download-buttons').style.display = 'none';
+
+
+            console.log('--- Starting Transformation ---');
+
+            // --- 1. Basic Input Checks ---
+            if (!jsonInputText) {
+                resultDiv.textContent = 'Error: JSON Input is empty.';
+                resultDiv.classList.add('error-message');
+                return;
+            }
+            if (!expressionText) {
+                resultDiv.textContent = 'Error: JSONata Expression is empty.';
+                resultDiv.classList.add('error-message');
+                return;
+            }
+
+            // --- 2. Parse the JSON Input ---
+            let data;
+            try {
+                data = JSON.parse(jsonInputText);
+                console.log('JSON Data Parsed Successfully:', data);
+            } catch (e) {
+                const errorMessage = `JSON Parse Error: Invalid JSON syntax.\nDetails: ${e.message}`;
+                resultDiv.textContent = errorMessage;
+                resultDiv.classList.add('error-message');
+                console.error(errorMessage, e);
+                return;
+            }
+
+            // --- 3. Evaluate the JSONata Expression ---
+            try {
+                // Check if the jsonata function is available
+                if (typeof jsonata !== 'function') {
+                    throw new Error("JSONata library not loaded. Check the CDN link.");
+                }
+
+                // Compile and evaluate the JSONata expression
+                const expression = jsonata(expressionText);
+                const evalResult = expression.evaluate(data);
+
+                console.log('JSONata Result:', evalResult);
+
+                // --- 4. Display the Result ---
+                const handleResult = (res) => {
+                    transformedData = res;
+                    const formatted = (typeof res === 'string') ? res : JSON.stringify(res, null, 2);
+                    resultDiv.textContent = formatted;
+                    if (Array.isArray(transformedData) && transformedData.length > 0) {
+                        toTabulatorBtn.disabled = false;
+                    }
+                };
+
+                if (evalResult && typeof evalResult.then === 'function') {
+                    // async result
+                    resultDiv.textContent = 'Processing async result...';
+                    evalResult.then(function(res) {
+                        try {
+                            handleResult(res);
+                        } catch (err) {
+                            resultDiv.textContent = 'Error formatting async result.';
+                            resultDiv.classList.add('error-message');
+                            console.error('Formatting error:', err);
+                        }
+                    }).catch(function(err) {
+                        const errorMessage = `JSONata Evaluation Error (async).
+Details: ${err && err.message ? err.message : err}`;
+                        resultDiv.textContent = errorMessage;
+                        resultDiv.classList.add('error-message');
+                        console.error(errorMessage, err);
+                    });
+                } else {
+                    // sync result
+                    handleResult(evalResult);
+                }
+                
+            } catch (e) {
+                const errorMessage = `JSONata Evaluation Error.\nDetails: ${e.message}`;
+                resultDiv.textContent = errorMessage;
+                resultDiv.classList.add('error-message');
+                console.error(errorMessage, e);
+                return;
+            }
+            console.log('--- Transformation Complete ---');
+        }
+
+        function renderTabulator() {
+            if (!transformedData || !Array.isArray(transformedData) || transformedData.length === 0) {
+                alert("No data to display. Please run a transformation first.");
+                return;
+            }
+
+            // Generate columns dynamically and add header filter
+            const columns = Object.keys(transformedData[0]).map(key => {
+                return { title: key.charAt(0).toUpperCase() + key.slice(1), field: key, headerFilter: "input" };
+            });
+
+            table = new Tabulator("#tabulator-table", {
+                data: transformedData,
+                columns: columns,
+                layout: "fitDataFill",
+            });
+            document.getElementById('download-buttons').style.display = 'block';
+        }
+
+        //add event listeners for download buttons
+        document.getElementById("download-csv").addEventListener("click", function(){
+            table.download("csv", "data.csv");
+        });
+
+        document.getElementById("download-json").addEventListener("click", function(){
+            table.download("json", "data.json");
+        });
+
+        document.getElementById("download-xlsx").addEventListener("click", function(){
+            table.download("xlsx", "data.xlsx", {sheetName:"My Data"});
+        });
+    </script>
+
+</body>
+</html>
