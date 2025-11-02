@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV to Mermaid Timeline</title>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <style>
+        body { font-family: sans-serif; margin: 20px; }
+        #controls { margin-bottom: 20px; }
+        #mermaid-output {
+            border: 1px solid #ccc;
+            padding: 10px;
+            min-height: 200px;
+            height: 60vh; /* Make it taller */
+            overflow: auto;
+            resize: both; /* Allow resizing */
+            background-color: #fafafa; /* Slightly different background */
+        }
+        .mermaid { display: flex; justify-content: center; } /* Center the diagram */
+
+        /* Styles for the dialog box */
+        #mermaidCodeDialogOverlay {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+        }
+
+        #mermaidCodeDialog {
+            background-color: #fefefe;
+            margin: 15% auto; /* 15% from the top and centered */
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%; /* Could be more or less, depending on screen size */
+            max-width: 700px;
+            position: relative;
+        }
+
+        #closeDialogBtn {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        #closeDialogBtn:hover,
+        #closeDialogBtn:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        #mermaidCodeDisplay {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            background-color: #eee;
+            padding: 10px;
+            border: 1px solid #ddd;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>CSV to Mermaid Timeline Diagram Generator</h1>
+    <p>Programmet krever følgende kolonnenavn (som du får med norsk innstilling i nettleser): "Modul", "Handling", "Mål", "Utførende DN", "Dato oppstod", "requestableName", "requestorName"</p>
+    <p style="color: red;">Timeline generering virker ikke hvis en section har bestaar av [iam:&lt;noe&gt;], du maa manuelt generert kode til [iam#&lt;noe&gt;], fiks kommer senere.</p>
+
+    <div id="controls">
+        <input type="file" id="csvFileInput" accept=".csv">
+        <button id="generateDiagramBtn">Generate Timeline Diagram</button>
+        <button id="generateFlowchartBtn">Create as Flowchart</button>
+        <button id="generateSequenceBtn">Generate Sequence Diagram</button>
+        <label><input type="checkbox" id="initialsCheckbox"> Transform full name to initials</label>
+
+        <hr style="margin: 20px 0;">
+
+        <h2>Test Custom Mermaid Code</h2>
+        <p>For information on themes and custom themes, see <a href="https://mermaid.js.org/config/theming.html" target="_blank">how to add themes and custom themes</a>.</p>
+        <div style="display: flex; gap: 20px;">
+            <textarea id="customMermaidInput" rows="10" cols="80" placeholder="Paste your Mermaid code here..."></textarea>
+            <pre style="background-color: #eee; padding: 10px; border: 1px solid #ddd; flex-grow: 1;">
+---
+config:
+  theme: 'base'
+  themeVariables:
+    primaryColor: '#F54927'
+    primaryTextColor: '#fff'
+    primaryBorderColor: '#7C0000'
+    lineColor: '#F8B229'
+    secondaryColor: '#276CF5'
+    tertiaryColor: '#fff'
+    fontSize: 24px
+---
+            </pre>
+        </div>
+        <br>
+        <button id="renderCustomMermaidBtn">Render Custom Mermaid</button>
+        <button id="renderTimeline3MmdBtn">Render from timeline3.mmd</button>
+    </div>
+
+    <div id="mermaid-output">
+        <div id="mermaidDiagramContainer"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const csvFileInput = document.getElementById('csvFileInput');
+            const generateDiagramBtn = document.getElementById('generateDiagramBtn');
+            const generateFlowchartBtn = document.getElementById('generateFlowchartBtn');
+            const generateSequenceBtn = document.getElementById('generateSequenceBtn');
+            const initialsCheckbox = document.getElementById('initialsCheckbox');
+            const diagramCode = document.getElementById('mermaidDiagramContainer');
+
+            function getInitials(fullName) {
+                if (!fullName || fullName === "Portal Agent" || fullName === "IDaaS API Agent") {
+                    return fullName;
+                }
+                return fullName.split(' ').map(n => n[0]).join(' ').toUpperCase();
+            }
+
+            // Dialog elements
+            const mermaidCodeDialogOverlay = document.getElementById('mermaidCodeDialogOverlay');
+            const mermaidCodeDisplay = document.getElementById('mermaidCodeDisplay');
+            const closeDialogBtn = document.getElementById('closeDialogBtn');
+
+            // Custom Mermaid input elements
+            const customMermaidInput = document.getElementById('customMermaidInput');
+            const renderCustomMermaidBtn = document.getElementById('renderCustomMermaidBtn');
+            const renderTimeline3MmdBtn = document.getElementById('renderTimeline3MmdBtn');
+
+            mermaid.initialize({
+                startOnLoad: false,
+                themeVariables: {
+                    fontSize: '13px'
+                }
+            }); // Initialize Mermaid, but don't render on load
+
+            generateDiagramBtn.addEventListener('click', () => {
+                const file = csvFileInput.files[0];
+                if (!file) {
+                    alert('Please select a CSV file first.');
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const csvData = e.target.result;
+                    parseCSVAndGenerateMermaid(csvData);
+                };
+                reader.readAsText(file);
+            });
+
+            generateFlowchartBtn.addEventListener('click', () => {
+                const file = csvFileInput.files[0];
+                if (!file) {
+                    alert('Please select a CSV file first.');
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const csvData = e.target.result;
+                    parseCSVAndGenerateFlowchart(csvData);
+                };
+                reader.readAsText(file);
+            });
+
+            generateSequenceBtn.addEventListener('click', () => {
+                const file = csvFileInput.files[0];
+                if (!file) {
+                    alert('Please select a CSV file first.');
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const csvData = e.target.result;
+                    parseCSVAndGenerateSequence(csvData);
+                };
+                reader.readAsText(file);
+            });
+
+            renderCustomMermaidBtn.addEventListener('click', () => {
+                const customCode = customMermaidInput.value;
+                if (!customCode.trim()) {
+                    alert('Please paste Mermaid code into the text area.');
+                    return;
+                }
+                renderMermaidDiagram(customCode);
+            });
+
+            renderTimeline3MmdBtn.addEventListener('click', () => {
+                fetch('timeline3.mmd?t=' + new Date().getTime())
+                    .then(response => response.text())
+                    .then(text => {
+                        customMermaidInput.value = text;
+                        renderMermaidDiagram(text);
+                    })
+                    .catch(error => {
+                        console.error('Error fetching timeline3.mmd:', error);
+                        diagramCode.textContent = 'Error fetching timeline3.mmd. See console for details.';
+                    });
+            });
+
+            closeDialogBtn.addEventListener('click', () => {
+                mermaidCodeDialogOverlay.style.display = 'none';
+            });
+
+            window.addEventListener('click', (event) => {
+                if (event.target == mermaidCodeDialogOverlay) {
+                    mermaidCodeDialogOverlay.style.display = 'none';
+                }
+            });
+
+            async function renderMermaidDiagram(mermaidSyntax) {
+                // Sanitize mermaidSyntax to remove invisible characters and normalize whitespace
+                const sanitizedMermaidSyntax = mermaidSyntax
+                    .replace(/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F]/g, '') // Remove non-printable ASCII chars, preserving line breaks
+                    .trim(); // Trim leading/trailing whitespace
+
+                // Show Mermaid code in dialog
+                mermaidCodeDisplay.textContent = sanitizedMermaidSyntax;
+                mermaidCodeDialogOverlay.style.display = 'block';
+
+                try {
+                    const { svg, bindFunctions } = await mermaid.render('mermaidRenderTarget', sanitizedMermaidSyntax);
+                    diagramCode.innerHTML = svg;
+                    if (bindFunctions) {
+                        bindFunctions(diagramCode);
+                    }
+                } catch (error) {
+                    console.error('Mermaid rendering failed:', error);
+                    diagramCode.textContent = 'Error rendering Mermaid diagram. Check console for details.';
+                }
+            }
+
+            function parseCSVAndGenerateFlowchart(csvString) {
+                Papa.parse(csvString, {
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: (results) => {
+                        const data = results.data;
+                        if (data.length === 0) {
+                            diagramCode.textContent = 'No data found in CSV.';
+                            return;
+                        }
+                        const mermaidSyntax = generateMermaidFlowchart(data);
+                        renderMermaidDiagram(mermaidSyntax);
+                    },
+                    error: (error) => {
+                        console.error('CSV parsing error:', error);
+                        diagramCode.textContent = 'Error parsing CSV. Check console for details.';
+                    }
+                });
+            }
+
+            function generateMermaidFlowchart(data) {
+                let flowchart = 'graph TD' + String.fromCharCode(10);
+
+                // Group events by requestableName
+                const groupedByRequestableName = {}; // { 'requestableName': [{ eventData }] }
+
+                data.forEach(row => {
+                    const dateStr = row['Dato oppstod'];
+                    if (!dateStr) return;
+
+                    const date = new Date(dateStr);
+                    if (isNaN(date.getTime())) {
+                        console.warn('Invalid date encountered:', dateStr);
+                        return;
+                    }
+
+                    const requestableName = row['requestableName'] ? row['requestableName'].trim() : 'Unknown Requestable';
+                    const handling = row['Handling'] || 'No Action';
+                    let requestorName = row['requestorName'] || 'Unknown Requestor';
+
+                    if (initialsCheckbox.checked) {
+                        requestorName = getInitials(requestorName);
+                    }
+
+                    // Format date for display
+                    const year = date.getFullYear();
+                    const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Months are 0-indexed
+                    const day = date.getDate().toString().padStart(2, '0');
+                    const hours = date.getHours().toString().padStart(2, '0');
+                    const minutes = date.getMinutes().toString().padStart(2, '0');
+
+                    const displayDate = `${year}-${month}-${day} ${hours}:${minutes}`;
+
+                    if (!groupedByRequestableName[requestableName]) {
+                        groupedByRequestableName[requestableName] = [];
+                    }
+                    groupedByRequestableName[requestableName].push({
+                        date: date, // Keep Date object for sorting
+                        description: `${handling} (by ${requestorName})`,
+                        displayDate: displayDate
+                    });
+                });
+
+                // Sort requestableNames (optional, but good for consistent output)
+                const sortedRequestableNames = Object.keys(groupedByRequestableName).sort();
+
+                sortedRequestableNames.forEach((reqName, groupIndex) => {
+                    flowchart += `    subgraph "${reqName}"` + String.fromCharCode(10);
+
+                    // Sort events within this requestableName by date
+                    const events = groupedByRequestableName[reqName];
+                    events.sort((a, b) => a.date - b.date);
+
+                    let prevNodeId = null;
+
+                    events.forEach((event, eventIndex) => {
+                        const nodeId = `node_${groupIndex}_${eventIndex}`;
+                        const nodeText = `"${event.displayDate}<br>${event.description}"`;
+                        flowchart += `        ${nodeId}[${nodeText}]` + String.fromCharCode(10);
+
+                        if (prevNodeId) {
+                            flowchart += `        ${prevNodeId} --> ${nodeId}` + String.fromCharCode(10);
+                        }
+                        prevNodeId = nodeId;
+                    });
+                    flowchart += '    end' + String.fromCharCode(10);
+                });
+
+                console.log('Generated Mermaid Flowchart Syntax:', flowchart); // Log the generated syntax
+                return flowchart;
+            }
+
+            function parseCSVAndGenerateSequence(csvString) {
+                Papa.parse(csvString, {
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: (results) => {
+                        const data = results.data;
+                        if (data.length === 0) {
+                            diagramCode.textContent = 'No data found in CSV.';
+                            return;
+                        }
+                        const mermaidSyntax = generateMermaidSequence(data);
+                        renderMermaidDiagram(mermaidSyntax);
+                    },
+                    error: (error) => {
+                        console.error('CSV parsing error:', error);
+                        diagramCode.textContent = 'Error parsing CSV. Check console for details.';
+                    }
+                });
+            }
+
+            function generateMermaidSequence(data) {
+                let sequence = 'sequenceDiagram' + String.fromCharCode(10);
+                sequence += '    title Workflow Entitlement Sequence' + String.fromCharCode(10) + String.fromCharCode(10);
+
+                const requesters = new Set();
+                const approvers = new Set();
+                const entitlements = new Set();
+
+                data.forEach(row => {
+                    const handling = row['Handling'] || '';
+                    let requestor = row['requestorName'] || '';
+                    if (initialsCheckbox.checked) {
+                        requestor = getInitials(requestor);
+                    }
+                    const reqName = row['requestableName'] || '';
+
+                    if (reqName) entitlements.add(reqName);
+
+                    if (handling.includes('Grant') && !handling.includes('Approve')) {
+                        if (requestor) requesters.add(requestor);
+                    }
+                    if (handling.includes('Approve')) {
+                        if (requestor) approvers.add(requestor);
+                    }
+                });
+
+                sequence += `    actor R as Requester (${[...requesters].join('/')})` + String.fromCharCode(10);
+                sequence += `    actor A as Approver (${[...approvers].join('/')})` + String.fromCharCode(10);
+                sequence += '    participant S as System Agent' + String.fromCharCode(10);
+
+                const entitlementAliases = {};
+                let e_index = 1;
+                for (const reqName of entitlements) {
+                    const alias = 'E' + e_index++;
+                    entitlementAliases[reqName] = alias;
+                    sequence += `    participant ${alias} as ${reqName}` + String.fromCharCode(10);
+                }
+                sequence += String.fromCharCode(10);
+
+
+                data.sort((a, b) => new Date(a['Dato oppstod']) - new Date(b['Dato oppstod']));
+
+                let lastDate = '';
+
+                data.forEach(row => {
+                    const dateStr = row['Dato oppstod'];
+                    if (!dateStr) return;
+
+                    const date = new Date(dateStr);
+                    if (isNaN(date.getTime())) return;
+
+                    const currentDate = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                    if (currentDate !== lastDate) {
+                        sequence += String.fromCharCode(10) + '    Note over R,S: **Cycle: ' + currentDate + '**' + String.fromCharCode(10);
+                        lastDate = currentDate;
+                    }
+
+                    const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    const handling = row['Handling'] || 'No Action';
+                    let requestorName = row['requestorName'] || 'Unknown';
+                    if (initialsCheckbox.checked) {
+                        requestorName = getInitials(requestorName);
+                    }
+                    const reqName = row['requestableName'] || '';
+                    const entitlementAlias = entitlementAliases[reqName] || 'E?';
+
+                    switch (handling) {
+                        case 'Request Entitlement Grant':
+                            sequence += `    R->>${entitlementAlias}: Request Grant (${time} - ${requestorName})` + String.fromCharCode(10);
+                            sequence += `    ${entitlementAlias}->>A: Request Grant Approval` + String.fromCharCode(10);
+                            break;
+                        case 'Approve Entitlement Grant Request':
+                            sequence += `    A-->>${entitlementAlias}: Approve Grant (${time} - ${requestorName})` + String.fromCharCode(10);
+                            break;
+                        case 'Workflow Entitlement(s) Granted':
+                            sequence += `    ${entitlementAlias}->>S: Entitlement Granted (${time})` + String.fromCharCode(10);
+                            break;
+                        case 'Request Entitlement Revocation':
+                            sequence += `    S->>${entitlementAlias}: Request Revocation (${time} - ${requestorName})` + String.fromCharCode(10);
+                            sequence += `    ${entitlementAlias}->>A: Request Revocation Approval` + String.fromCharCode(10);
+                            break;
+                        case 'Approve Entitlement Revocation Request':
+                            sequence += `    A-->>${entitlementAlias}: Approve Revocation (${time} - ${requestorName})` + String.fromCharCode(10);
+                            break;
+                        case 'Workflow Entitlement(s) Revoked':
+                            sequence += `    ${entitlementAlias}->>S: Entitlement Revoked (${time})` + String.fromCharCode(10);
+                            break;
+                    }
+                });
+
+                return sequence;
+            }
+
+            function parseCSVAndGenerateMermaid(csvString) {
+                Papa.parse(csvString, {
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: (results) => {
+                        const data = results.data;
+                        if (data.length === 0) {
+                            diagramCode.textContent = 'No data found in CSV.';
+                            return;
+                        }
+                        const mermaidSyntax = generateMermaidTimeline(data);
+                        renderMermaidDiagram(mermaidSyntax); // Call the new rendering function
+                    },
+                    error: (error) => {
+                        console.error('CSV parsing error:', error);
+                        diagramCode.textContent = 'Error parsing CSV. Check console for details.';
+                    }
+                });
+            }
+
+            function generateMermaidTimeline(data) {
+                let timeline = 'timeline' + String.fromCharCode(10) + '    title Entitlement Workflow History' + String.fromCharCode(10);
+
+                // Group events by requestableName
+                const groupedByRequestableName = {}; // { 'requestableName': [{ eventData }] }
+
+                data.forEach(row => {
+                    const dateStr = row['Dato oppstod'];
+                    if (!dateStr) return;
+
+                    const date = new Date(dateStr);
+                    if (isNaN(date.getTime())) {
+                        console.warn('Invalid date encountered:', dateStr);
+                        return;
+                    }
+
+                    const requestableName = row['requestableName'] ? row['requestableName'].trim() : 'Unknown Requestable';
+                    const handling = row['Handling'] || 'No Action';
+                    let requestorName = row['requestorName'] || 'Unknown Requestor';
+                    if (initialsCheckbox.checked) {
+                        requestorName = getInitials(requestorName);
+                    }
+
+                    // Format date for display: "Oct 28, 10:37 AM"
+                    const year = date.getFullYear();
+                    const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Months are 0-indexed
+                    const day = date.getDate().toString().padStart(2, '0');
+                    const hours = date.getHours().toString().padStart(2, '0');
+                    const minutes = date.getMinutes().toString().padStart(2, '0');
+
+                    const displayDate = `${year}-${month}-${day} ${hours}${minutes}`;
+
+                    if (!groupedByRequestableName[requestableName]) {
+                        groupedByRequestableName[requestableName] = [];
+                    }
+                    groupedByRequestableName[requestableName].push({
+                        date: date, // Keep Date object for sorting
+                        description: `${handling} (by ${requestorName})\n\n\n\n\n\n`,
+                        displayDate: displayDate
+                    });
+                });
+
+                // Sort requestableNames (optional, but good for consistent output)
+                const sortedRequestableNames = Object.keys(groupedByRequestableName).sort();
+
+                sortedRequestableNames.forEach((reqName, index) => {
+                    timeline += `    Section ${index + 1} ${reqName}` + String.fromCharCode(10);
+
+                    // Sort events within this requestableName by date
+                    groupedByRequestableName[reqName].sort((a, b) => a.date - b.date);
+
+                    groupedByRequestableName[reqName].forEach(event => {
+                        timeline += `        ${event.description.trim()} : ${event.displayDate.trim()}` + String.fromCharCode(10); // Ensure trim and explicit newline
+                    });
+                    timeline += String.fromCharCode(10); // Add an extra newline after each section
+                });
+
+                console.log('Generated Mermaid Syntax:', timeline); // Log the generated syntax
+                return timeline;
+            }
+        });
+    </script>
+
+    <!-- The Dialog Box HTML -->
+    <div id="mermaidCodeDialogOverlay">
+        <div id="mermaidCodeDialog">
+            <span class="close" id="closeDialogBtn">&times;</span>
+            <h2>Generated Mermaid Code</h2>
+            <pre id="mermaidCodeDisplay"></pre>
+        </div>
+    </div>
+</body>
+</html>
