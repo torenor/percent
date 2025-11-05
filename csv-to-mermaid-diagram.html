@@ -243,29 +243,44 @@ config:
             });
 
             generateDiagramBtn.addEventListener('click', () => {
-                if (tableData.length === 0) {
+                if (!table) {
                     alert('Please select a CSV file first.');
                     return;
                 }
-                const mermaidSyntax = generateMermaidTimeline(tableData);
+                const data = table.getData('active');
+                if (data.length === 0) {
+                    alert('No data to generate diagram from. Try changing the filters.');
+                    return;
+                }
+                const mermaidSyntax = generateMermaidTimeline(data);
                 renderMermaidDiagram(mermaidSyntax);
             });
 
             generateFlowchartBtn.addEventListener('click', () => {
-                if (tableData.length === 0) {
+                if (!table) {
                     alert('Please select a CSV file first.');
                     return;
                 }
-                const mermaidSyntax = generateMermaidFlowchart(tableData);
+                const data = table.getData('active');
+                if (data.length === 0) {
+                    alert('No data to generate diagram from. Try changing the filters.');
+                    return;
+                }
+                const mermaidSyntax = generateMermaidFlowchart(data);
                 renderMermaidDiagram(mermaidSyntax);
             });
 
             generateSequenceBtn.addEventListener('click', () => {
-                if (tableData.length === 0) {
+                if (!table) {
                     alert('Please select a CSV file first.');
                     return;
                 }
-                const mermaidSyntax = generateMermaidSequence(tableData);
+                const data = table.getData('active');
+                if (data.length === 0) {
+                    alert('No data to generate diagram from. Try changing the filters.');
+                    return;
+                }
+                const mermaidSyntax = generateMermaidSequence(data);
                 renderMermaidDiagram(mermaidSyntax);
             });
 
