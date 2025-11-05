@@ -175,7 +175,28 @@ config:
                         header: true,
                         skipEmptyLines: true,
                         complete: (results) => {
-                            tableData = results.data;
+                            tableData = results.data.map(row => {
+                                if (row['Dato oppstod']) {
+                                    const originalDateStr = row['Dato oppstod'];
+                                    const date = new Date(originalDateStr);
+                                    if (!isNaN(date.getTime())) {
+                                        const year = date.getFullYear();
+                                        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                                        const day = date.getDate().toString().padStart(2, '0');
+                                        const hours = date.getHours().toString().padStart(2, '0');
+                                        const minutes = date.getMinutes().toString().padStart(2, '0');
+                                        row['Dato oppstod_formatted'] = `${year}-${month}-${day} ${hours}${minutes}`;
+                                        row['Dato oppstod_original_date_obj'] = date;
+                                    } else {
+                                        row['Dato oppstod_formatted'] = originalDateStr;
+                                        row['Dato oppstod_original_date_obj'] = null;
+                                    }
+                                } else {
+                                    row['Dato oppstod_formatted'] = '';
+                                    row['Dato oppstod_original_date_obj'] = null;
+                                }
+                                return row;
+                            });
                             initializeTable(tableData);
                         },
                         error: (error) => {
@@ -215,6 +236,9 @@ config:
                     const col = { title: key, field: key, headerFilter: true };
                     if (key === 'Handling') {
                         col.formatter = handlingFormatter;
+                    }
+                    if (key === 'Dato oppstod') {
+                        col.field = 'Dato oppstod_formatted';
                     }
                     return col;
                 });
@@ -356,30 +380,23 @@ config:
                 let flowchart = 'graph TD' + String.fromCharCode(10);
                 const groupedByRequestableName = {};
                 data.forEach(row => {
-                    const dateStr = row['Dato oppstod'];
-                    if (!dateStr) return;
-                    const date = new Date(dateStr);
-                    if (isNaN(date.getTime())) {
-                        console.warn('Invalid date encountered:', dateStr);
-                        return;
-                    }
+                    const displayDate = row['Dato oppstod_formatted'];
+                    const originalDate = row['Dato oppstod_original_date_obj'];
+
+                    if (!displayDate || !originalDate) return;
+
                     const requestableName = row['requestableName'] ? row['requestableName'].trim() : 'Unknown Requestable';
                     const handling = row['Handling'] || 'No Action';
                     let requestorName = row['requestorName'] || 'Unknown Requestor';
                     if (initialsCheckbox.checked) {
                         requestorName = getInitials(requestorName);
                     }
-                    const year = date.getFullYear();
-                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                    const day = date.getDate().toString().padStart(2, '0');
-                    const hours = date.getHours().toString().padStart(2, '0');
-                    const minutes = date.getMinutes().toString().padStart(2, '0');
-                    const displayDate = `${year}-${month}-${day} ${hours}:${minutes}`;
+
                     if (!groupedByRequestableName[requestableName]) {
                         groupedByRequestableName[requestableName] = [];
                     }
                     groupedByRequestableName[requestableName].push({
-                        date: date,
+                        date: originalDate,
                         description: `${handling} (by ${requestorName})`,
                         displayDate: displayDate
                     });
@@ -437,19 +454,23 @@ config:
                     sequence += `    participant ${alias} as ${reqName}` + String.fromCharCode(10);
                 }
                 sequence += String.fromCharCode(10);
-                data.sort((a, b) => new Date(a['Dato oppstod']) - new Date(b['Dato oppstod']));
+                data.sort((a, b) => {
+                    const dateA = a['Dato oppstod_original_date_obj'];
+                    const dateB = b['Dato oppstod_original_date_obj'];
+                    if (!dateA || !dateB) return 0;
+                    return dateA - dateB;
+                });
                 let lastDate = '';
                 data.forEach(row => {
-                    const dateStr = row['Dato oppstod'];
-                    if (!dateStr) return;
-                    const date = new Date(dateStr);
-                    if (isNaN(date.getTime())) return;
-                    const currentDate = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                    const originalDate = row['Dato oppstod_original_date_obj'];
+                    if (!originalDate) return;
+
+                    const currentDate = originalDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
                     if (currentDate !== lastDate) {
                         sequence += String.fromCharCode(10) + '    Note over R,S: **Cycle: ' + currentDate + '**' + String.fromCharCode(10);
                         lastDate = currentDate;
                     }
-                    const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    const time = originalDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                     const handling = row['Handling'] || 'No Action';
                     let requestorName = row['requestorName'] || 'Unknown';
                     if (initialsCheckbox.checked) {
@@ -487,30 +508,23 @@ config:
                 let timeline = 'timeline' + String.fromCharCode(10) + '    title Entitlement Workflow History' + String.fromCharCode(10);
                 const groupedByRequestableName = {};
                 data.forEach(row => {
-                    const dateStr = row['Dato oppstod'];
-                    if (!dateStr) return;
-                    const date = new Date(dateStr);
-                    if (isNaN(date.getTime())) {
-                        console.warn('Invalid date encountered:', dateStr);
-                        return;
-                    }
+                    const displayDate = row['Dato oppstod_formatted'];
+                    const originalDate = row['Dato oppstod_original_date_obj'];
+
+                    if (!displayDate || !originalDate) return;
+
                     const requestableName = row['requestableName'] ? row['requestableName'].trim() : 'Unknown Requestable';
                     const handling = row['Handling'] || 'No Action';
                     let requestorName = row['requestorName'] || 'Unknown Requestor';
                     if (initialsCheckbox.checked) {
                         requestorName = getInitials(requestorName);
                     }
-                    const year = date.getFullYear();
-                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                    const day = date.getDate().toString().padStart(2, '0');
-                    const hours = date.getHours().toString().padStart(2, '0');
-                    const minutes = date.getMinutes().toString().padStart(2, '0');
-                    const displayDate = `${year}-${month}-${day} ${hours}${minutes}`;
+
                     if (!groupedByRequestableName[requestableName]) {
                         groupedByRequestableName[requestableName] = [];
                     }
                     groupedByRequestableName[requestableName].push({
-                        date: date,
+                        date: originalDate,
                         description: `${handling} (by ${requestorName})\n\n\n\n\n\n`,
                         displayDate: displayDate
                     });
