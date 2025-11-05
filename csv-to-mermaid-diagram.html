@@ -199,6 +199,8 @@ config:
                             cell.getElement().style.backgroundColor = 'orange';
                         } else if (value.endsWith('Revoked')) {
                             cell.getElement().style.color = 'red';
+                        } else if (value === 'Disable Account') {
+                            cell.getElement().style.backgroundColor = '#ff9100';
                         } else if (value.endsWith('Granted')) {
                             cell.getElement().style.color = 'green';
                         }
@@ -217,7 +219,8 @@ config:
                 table = new Tabulator("#tabulator-table", {
                     data: data,
                     columns: columns,
-                    layout: "fitColumns",
+                    colResizable: true,
+                 
                 });
             }
 
