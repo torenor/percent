@@ -85,6 +85,7 @@
         <button id="generateDiagramBtn">Generate Timeline Diagram</button>
         <button id="generateFlowchartBtn">Create as Flowchart</button>
         <button id="generateSequenceBtn">Generate Sequence Diagram</button>
+        <button id="loadDevserverDataBtn">Load data from devserver</button>
         <label><input type="checkbox" id="initialsCheckbox"> Transform full name to initials</label>
         <label><input type="checkbox" id="openInNewTabCheckbox"> Open rendered diagram in new tab</label>
     </div>
@@ -132,6 +133,7 @@ config:
             const generateSequenceBtn = document.getElementById('generateSequenceBtn');
             const initialsCheckbox = document.getElementById('initialsCheckbox');
             const openInNewTabCheckbox = document.getElementById('openInNewTabCheckbox');
+            const loadDevserverDataBtn = document.getElementById('loadDevserverDataBtn');
             const diagramCode = document.getElementById('mermaidDiagramContainer');
             const downloadXlsxBtn = document.getElementById('download-xlsx');
             const toggleMaalColumnCheckbox = document.getElementById('toggle-maal-column');
@@ -175,6 +177,23 @@ config:
                         header: true,
                         skipEmptyLines: true,
                         complete: (results) => {
+                            const requiredColumns = ["Modul", "Handling", "Mål", "Utførende DN", "Dato oppstod", "requestableName", "requestorName"];
+                            const headers = results.meta.fields;
+
+                            if (!headers) {
+                                alert('Could not read headers from CSV file.');
+                                csvFileInput.value = ''; // Reset file input
+                                return;
+                            }
+
+                            const missingColumns = requiredColumns.filter(col => !headers.includes(col));
+
+                            if (missingColumns.length > 0) {
+                                alert(`The CSV file is missing the following required columns: ${missingColumns.join(', ')}`);
+                                csvFileInput.value = ''; // Reset file input
+                                return;
+                            }
+
                             tableData = results.data.map(row => {
                                 if (row['Dato oppstod']) {
                                     const originalDateStr = row['Dato oppstod'];
@@ -234,6 +253,9 @@ config:
 
                 const columns = Object.keys(data[0]).map(key => {
                     const col = { title: key, field: key, headerFilter: true };
+                    if (key === 'Modul') {
+                        col.topCalc = "count";
+                    }
                     if (key === 'Handling') {
                         col.formatter = handlingFormatter;
                     }
@@ -247,6 +269,8 @@ config:
                     data: data,
                     columns: columns,
                     colResizable: true,
+                    pagination: "local",
+                    paginationSize: 50,
                  
                 });
             }
@@ -333,6 +357,49 @@ config:
                     });
             });
 
+            loadDevserverDataBtn.addEventListener('click', async () => {
+                try {
+                    const response = await fetch('http://localhost:3033/api/');
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const data = await response.json();
+                    if (data.length > 0) {
+                        // Assuming the API returns data in a format compatible with initializeTable
+                        // We need to add the _formatted and _original_date_obj fields if they are not present
+                        const processedData = data.map(row => {
+                            if (row['Dato oppstod']) {
+                                const originalDateStr = row['Dato oppstod'];
+                                const date = new Date(originalDateStr);
+                                if (!isNaN(date.getTime())) {
+                                    const year = date.getFullYear();
+                                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                                    const day = date.getDate().toString().padStart(2, '0');
+                                    const hours = date.getHours().toString().padStart(2, '0');
+                                    const minutes = date.getMinutes().toString().padStart(2, '0');
+                                    row['Dato oppstod_formatted'] = `${year}-${month}-${day} ${hours}${minutes}`;
+                                    row['Dato oppstod_original_date_obj'] = date;
+                                } else {
+                                    row['Dato oppstod_formatted'] = originalDateStr;
+                                    row['Dato oppstod_original_date_obj'] = null;
+                                }
+                            } else {
+                                row['Dato oppstod_formatted'] = '';
+                                row['Dato oppstod_original_date_obj'] = null;
+                            }
+                            return row;
+                        });
+                        initializeTable(processedData);
+                    } else {
+                        alert('No data received from the devserver.');
+                        if (table) table.clearData();
+                    }
+                } catch (error) {
+                    console.error('Error loading data from devserver:', error);
+                    alert('Failed to load data from devserver. Make sure the server is running at http://localhost:3033 and there are CSV files in the ridb folder.');
+                }
+            });
+
             closeDialogBtn.addEventListener('click', () => {
                 mermaidCodeDialogOverlay.style.display = 'none';
             });
@@ -385,7 +452,8 @@ config:
 
                     if (!displayDate || !originalDate) return;
 
-                    const requestableName = row['requestableName'] ? row['requestableName'].trim() : 'Unknown Requestable';
+                    let requestableName = row['requestableName'] ? row['requestableName'].trim() : 'Unknown Requestable';
+
                     const handling = row['Handling'] || 'No Action';
                     let requestorName = row['requestorName'] || 'Unknown Requestor';
                     if (initialsCheckbox.checked) {
@@ -513,7 +581,10 @@ config:
 
                     if (!displayDate || !originalDate) return;
 
-                    const requestableName = row['requestableName'] ? row['requestableName'].trim() : 'Unknown Requestable';
+                    let requestableName = row['requestableName'] ? row['requestableName'].trim() : 'Unknown Requestable';
+                    // Replace [iam: with [iam@ to fix Mermaid timeline syntax issues
+                    requestableName = requestableName.replace(/\[iam:/g, '[iam@');
+
                     const handling = row['Handling'] || 'No Action';
                     let requestorName = row['requestorName'] || 'Unknown Requestor';
                     if (initialsCheckbox.checked) {
