@@ -77,7 +77,7 @@
 <body>
     <h1>CSV to Mermaid Diagram Generator</h1>
     <p>Programmet krever følgende kolonnenavn (som du får med norsk innstilling i nettleser): "Modul", "Handling", "Mål", "Utførende DN", "Dato oppstod", "requestableName", "requestorName"</p>
-    <p style="color: red;">Timeline generering virker ikke hvis en section består av [iam:&lt;noe&gt;], du må manuelt generert kode til [iam@&lt;noe&gt;], fiks kommer senere.</p>
+    <p style="color: red;">Programmet gjør om [iam:&lt;noe&gt;] til [iam@&lt;noe&gt;] i mermaid diagrammene pga syntaksproblemer.</p>
 	    <p style="color: blue;">Generering av mermaid diagram skjer på bakgrunn av innhold i tabell, dvs. du kan filtrere rader som benyttes til generering. Nåværende versjon har hatt fokus på data fra Modul Workflow, så hvis du filterer på data fra andre moduler kan resultat bli mangelfullt.</p>
 
     <div id="controls">
@@ -162,6 +162,24 @@ config:
                 }
             });
 
+            const handlingFormatter = (cell, formatterParams, onRendered) => {
+                const value = cell.getValue();
+                if (value) {
+                    if (value === 'Approve Entitlement Revocation Request') {
+                        cell.getElement().style.backgroundColor = 'cyan';
+                    } else if (value === 'Deny Entitlement Revocation Request') {
+                        cell.getElement().style.backgroundColor = 'orange';
+                    } else if (value.endsWith('Revoked')) {
+                        cell.getElement().style.color = 'red';
+                    } else if (value === 'Disable Account') {
+                        cell.getElement().style.backgroundColor = '#ff9100';
+                    } else if (value.endsWith('Granted')) {
+                        cell.getElement().style.color = 'green';
+                    }
+                }
+                return value;
+            };
+
             csvFileInput.addEventListener('change', () => {
                 const file = csvFileInput.files[0];
                 if (!file) {
@@ -177,23 +195,7 @@ config:
                         header: true,
                         skipEmptyLines: true,
                         complete: (results) => {
-                            const requiredColumns = ["Modul", "Handling", "Mål", "Utførende DN", "Dato oppstod", "requestableName", "requestorName"];
-                            const headers = results.meta.fields;
-
-                            if (!headers) {
-                                alert('Could not read headers from CSV file.');
-                                csvFileInput.value = ''; // Reset file input
-                                return;
-                            }
-
-                            const missingColumns = requiredColumns.filter(col => !headers.includes(col));
-
-                            if (missingColumns.length > 0) {
-                                alert(`The CSV file is missing the following required columns: ${missingColumns.join(', ')}`);
-                                csvFileInput.value = ''; // Reset file input
-                                return;
-                            }
-
+                            const staticColumnFields = ["Modul", "Handling", "Mål", "Utførende DN", "Dato oppstod", "requestableName", "requestorName", "groupName", "Målsystem"];
                             tableData = results.data.map(row => {
                                 if (row['Dato oppstod']) {
                                     const originalDateStr = row['Dato oppstod'];
@@ -214,6 +216,13 @@ config:
                                     row['Dato oppstod_formatted'] = '';
                                     row['Dato oppstod_original_date_obj'] = null;
                                 }
+
+                                // Ensure all static columns exist
+                                for (const field of staticColumnFields) {
+                                    if (!row.hasOwnProperty(field)) {
+                                        row[field] = '';
+                                    }
+                                }
                                 return row;
                             });
                             initializeTable(tableData);
@@ -233,37 +242,17 @@ config:
                     return;
                 }
 
-                const handlingFormatter = (cell, formatterParams, onRendered) => {
-                    const value = cell.getValue();
-                    if (value) {
-                        if (value === 'Approve Entitlement Revocation Request') {
-                            cell.getElement().style.backgroundColor = 'cyan';
-                        } else if (value === 'Deny Entitlement Revocation Request') {
-                            cell.getElement().style.backgroundColor = 'orange';
-                        } else if (value.endsWith('Revoked')) {
-                            cell.getElement().style.color = 'red';
-                        } else if (value === 'Disable Account') {
-                            cell.getElement().style.backgroundColor = '#ff9100';
-                        } else if (value.endsWith('Granted')) {
-                            cell.getElement().style.color = 'green';
-                        }
-                    }
-                    return value;
-                };
-
-                const columns = Object.keys(data[0]).map(key => {
-                    const col = { title: key, field: key, headerFilter: true };
-                    if (key === 'Modul') {
-                        col.topCalc = "count";
-                    }
-                    if (key === 'Handling') {
-                        col.formatter = handlingFormatter;
-                    }
-                    if (key === 'Dato oppstod') {
-                        col.field = 'Dato oppstod_formatted';
-                    }
-                    return col;
-                });
+                const columns = [
+                    { title: "Modul", field: "Modul", headerFilter: true, topCalc: "count" },
+                    { title: "Handling", field: "Handling", headerFilter: true, formatter: handlingFormatter },
+                    { title: "Mål", field: "Mål", headerFilter: true },
+                    { title: "Utførende DN", field: "Utførende DN", headerFilter: true },
+                    { title: "Dato oppstod", field: "Dato oppstod_formatted", headerFilter: true },
+                    { title: "requestableName", field: "requestableName", headerFilter: true },
+                    { title: "requestorName", field: "requestorName", headerFilter: true },
+                    { title: "groupName", field: "groupName", headerFilter: true },
+                    { title: "Målsystem", field: "Målsystem", headerFilter: true }
+                ];
 
                 table = new Tabulator("#tabulator-table", {
                     data: data,
@@ -271,7 +260,6 @@ config:
                     colResizable: true,
                     pagination: "local",
                     paginationSize: 50,
-                 
                 });
             }
 
@@ -364,10 +352,11 @@ config:
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
                     const data = await response.json();
+                    const staticColumnFields = ["Modul", "Handling", "Mål", "Utførende DN", "Dato oppstod", "requestableName", "requestorName", "groupName", "Målsystem"];
+
                     if (data.length > 0) {
-                        // Assuming the API returns data in a format compatible with initializeTable
-                        // We need to add the _formatted and _original_date_obj fields if they are not present
                         const processedData = data.map(row => {
+                            // Process date
                             if (row['Dato oppstod']) {
                                 const originalDateStr = row['Dato oppstod'];
                                 const date = new Date(originalDateStr);
@@ -386,6 +375,13 @@ config:
                             } else {
                                 row['Dato oppstod_formatted'] = '';
                                 row['Dato oppstod_original_date_obj'] = null;
+                            }
+
+                            // Ensure all static columns exist
+                            for (const field of staticColumnFields) {
+                                if (!row.hasOwnProperty(field)) {
+                                    row[field] = '';
+                                }
                             }
                             return row;
                         });
