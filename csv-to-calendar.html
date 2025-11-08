@@ -18,6 +18,53 @@
     max-width: 1100px;
     margin: 0 auto;
   }
+
+  .modal {
+    display: none; 
+    position: fixed; 
+    z-index: 1000; 
+    left: 0;
+    top: 0;
+    width: 100%; 
+    height: 100%; 
+    overflow: auto; 
+    background-color: rgb(0,0,0); 
+    background-color: rgba(0,0,0,0.4); 
+  }
+
+  .modal-content {
+    background-color: #fefefe;
+    margin: 15% auto; 
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%; 
+    max-width: 600px;
+    position: relative;
+  }
+
+  .close-button {
+    color: #aaa;
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    font-size: 28px;
+    font-weight: bold;
+  }
+
+  .close-button:hover,
+  .close-button:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  #event-details {
+    width: 100%;
+    height: 150px;
+    box-sizing: border-box;
+    resize: vertical;
+    margin-top: 20px;
+  }
 </style>
  <h1>CSV to calendar Generator</h1>
 
@@ -57,6 +104,14 @@
 
   <div id='calendar'></div>
 
+  <div id="event-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-button">&times;</span>
+      <h3>Event Details</h3>
+      <textarea id="event-details" readonly></textarea>
+    </div>
+  </div>
+
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       // --- DOM Elements ---
@@ -74,6 +129,9 @@
       const loadApiButton = document.getElementById('load-api-button');
       const loadCsvButton = document.getElementById('load-csv-button');
       const csvFileInput = document.getElementById('csv-file-input');
+      const eventModal = document.getElementById('event-modal');
+      const eventDetailsTextarea = document.getElementById('event-details');
+      const closeButton = document.querySelector('.close-button');
 
       // --- State ---
       let allEvents = [];
@@ -217,7 +275,9 @@
             const event = info.event;
             let content = `Event: ${event.title}\nStart: ${event.start ? event.start.toLocaleString() : 'N/A'}`;
             if (event.end) content += `\nEnd: ${event.end.toLocaleString()}`;
-            alert(content);
+            
+            eventDetailsTextarea.value = content;
+            eventModal.style.display = 'block';
           }
         }
       });
@@ -246,6 +306,16 @@
           if (e.key === 'Enter') applyFilter();
         });
       });
+
+      // --- Modal Listeners ---
+      closeButton.onclick = function() {
+        eventModal.style.display = "none";
+      }
+      window.onclick = function(event) {
+        if (event.target == eventModal) {
+          eventModal.style.display = "none";
+        }
+      }
     });
   </script>
 </body>
