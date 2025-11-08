@@ -111,7 +111,7 @@
           }
 
           const groupNameText = (item.Modul === 'Groups' && item.groupName) ? `(${item.groupName})` : '';
-          const title = `${item.Handling || 'N/A'} ${item.requestableName || ''} ${groupNameText} (Req by: ${item.requestorName || 'N/A'})`;
+          const title = `${item.Handling || 'N/A'} ${item.requestableName || ''} ${groupNameText} (Req by: ${item.requestorName || 'N/A'}) to user: ${item['Mål'] || 'N/A'}`;
 
           return {
               title: title,
