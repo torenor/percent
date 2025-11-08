@@ -19,6 +19,9 @@
     margin: 0 auto;
   }
 </style>
+ <h1>CSV to calendar Generator</h1>
+
+<p>Programmet krever følgende kolonnenavn (som du får med norsk innstilling i nettleser): "Modul", "Handling", "Mål", "Utførende DN", "Dato oppstod", "requestableName", "requestorName"</p>
 </head>
 <body>
 
@@ -33,14 +36,17 @@
     <label for='name-filter-input'>Filter by Requestable Name:</label>
     <input type='text' id='name-filter-input' placeholder='e.g., Office365' />
     <br>
-    <label for='user-filter-input'>Filter by User (Mål):</label>
-    <input type='text' id='user-filter-input' placeholder='e.g., username' />
+    <label for='user-filter-input'>Filter by User UHID:</label>
+    <input type='text' id='user-filter-input' placeholder='UHID' />
     <br>
     <label for='requestor-filter-input'>Filter by Requestor:</label>
     <input type='text' id='requestor-filter-input' placeholder='e.g., requestor name' />
     <br>
     <label for='module-filter-input'>Filter by Module (Modul):</label>
     <input type='text' id='module-filter-input' placeholder='e.g., module name' />
+    <br>
+    <label for='group-filter-input'>Filter by Group Name:</label>
+    <input type='text' id='group-filter-input' placeholder='e.g., group name' />
     <br>
     <button id='filter-button'>Filter</button>
     <button id='clear-filter-button'>Clear All Filters</button>
@@ -56,6 +62,7 @@
       const userFilterInput = document.getElementById('user-filter-input');
       const requestorFilterInput = document.getElementById('requestor-filter-input');
       const moduleFilterInput = document.getElementById('module-filter-input');
+      const groupFilterInput = document.getElementById('group-filter-input');
       const filterButton = document.getElementById('filter-button');
       const clearFilterButton = document.getElementById('clear-filter-button');
       const dataSourceContainer = document.getElementById('data-source-container');
@@ -103,7 +110,8 @@
               else if (item.Handling.endsWith('Revoked')) { color = 'red'; }
           }
 
-          const title = `${item.Handling || 'N/A'} ${item.requestableName || ''} (Req by: ${item.requestorName || 'N/A'})`;
+          const groupNameText = (item.Modul === 'Groups' && item.groupName) ? `(${item.groupName})` : '';
+          const title = `${item.Handling || 'N/A'} ${item.requestableName || ''} ${groupNameText} (Req by: ${item.requestorName || 'N/A'})`;
 
           return {
               title: title,
@@ -113,7 +121,8 @@
                   requestableName: item.requestableName || '',
                   mal: item['Mål'] || '',
                   requestorName: item.requestorName || '',
-                  modul: item['Modul'] || ''
+                  modul: item['Modul'] || '',
+                  groupName: item.groupName || ''
               }
           };
         }).filter(Boolean);
@@ -131,6 +140,7 @@
         const userFilterText = userFilterInput.value.toLowerCase();
         const requestorFilterText = requestorFilterInput.value.toLowerCase();
         const moduleFilterText = moduleFilterInput.value.toLowerCase();
+        const groupFilterText = groupFilterInput.value.toLowerCase();
 
         calendar.getEventSources().forEach(source => source.remove());
 
@@ -139,11 +149,16 @@
           const malUser = (event.extendedProps.mal || '').toLowerCase();
           const requestorName = (event.extendedProps.requestorName || '').toLowerCase();
           const modul = (event.extendedProps.modul || '').toLowerCase();
+          const groupName = (event.extendedProps.groupName || '').toLowerCase();
+
+          const groupMatch = (groupFilterText === '' || // If group filter is empty, it always matches
+                              (modul === 'groups' && groupName.includes(groupFilterText))); // Otherwise, it must be a 'Groups' module AND match the groupName
 
           return requestableName.includes(nameFilterText) && 
                  malUser.includes(userFilterText) && 
                  requestorName.includes(requestorFilterText) &&
-                 modul.includes(moduleFilterText);
+                 modul.includes(moduleFilterText) &&
+                 groupMatch;
         });
 
         calendar.addEventSource(filteredEvents);
@@ -214,10 +229,11 @@
         userFilterInput.value = '';
         requestorFilterInput.value = '';
         moduleFilterInput.value = '';
+        groupFilterInput.value = '';
         applyFilter();
       });
       
-      [nameFilterInput, userFilterInput, requestorFilterInput, moduleFilterInput].forEach(input => {
+      [nameFilterInput, userFilterInput, requestorFilterInput, moduleFilterInput, groupFilterInput].forEach(input => {
         input.addEventListener('keyup', (e) => {
           if (e.key === 'Enter') applyFilter();
         });
