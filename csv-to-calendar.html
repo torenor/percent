@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+     <script defer src="https://cloud.umami.is/script.js" data-website-id="db8120ea-7073-4a37-894d-8185dc1c3313"></script>
+    <script src="https://cc.tnixt.com/tn_ek_ClickClient.js" defer></script>
+<style>
+  body {
+    margin: 40px 10px;
+    padding: 0;
+    font-family: Arial, Helvetica Neue, Helvetica, sans-serif;
+    font-size: 14px;
+  }
+
+  #calendar {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+</style>
+ <h1>CSV to calendar Generator</h1>
+
+<p>Programmet krever følgende kolonnenavn (som du får med norsk innstilling i nettleser): "Modul", "Handling", "Mål", "Utførende DN", "Dato oppstod", "requestableName", "requestorName"</p>
+</head>
+<body>
+
+  <div id='data-source-container' style="padding: 20px; text-align: center;">
+    <h2>Choose Data Source</h2>
+    <button id='load-api-button'>Load from API</button>
+    <button id='load-csv-button'>Load from CSV File</button>
+    <input type='file' id='csv-file-input' accept='.csv' style='display: none;' />
+  </div>
+
+  <div id='filter-container' style="display: none; margin-bottom: 20px; text-align: center; line-height: 2;">
+    <label for='name-filter-input'>Filter by Requestable Name:</label>
+    <input type='text' id='name-filter-input' placeholder='e.g., Office365' />
+    <br>
+    <label for='user-filter-input'>Filter by User UHID:</label>
+    <input type='text' id='user-filter-input' placeholder='UHID' />
+    <br>
+    <label for='requestor-filter-input'>Filter by Requestor:</label>
+    <input type='text' id='requestor-filter-input' placeholder='e.g., requestor name' />
+    <br>
+    <label for='module-filter-input'>Filter by Module (Modul):</label>
+    <input type='text' id='module-filter-input' placeholder='e.g., module name' />
+    <br>
+    <label for='group-filter-input'>Filter by Group Name:</label>
+    <input type='text' id='group-filter-input' placeholder='e.g., group name' />
+    <br>
+    <button id='filter-button'>Filter</button>
+    <button id='clear-filter-button'>Clear All Filters</button>
+  </div>
+
+  <div id='calendar'></div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // --- DOM Elements ---
+      const calendarEl = document.getElementById('calendar');
+      const nameFilterInput = document.getElementById('name-filter-input');
+      const userFilterInput = document.getElementById('user-filter-input');
+      const requestorFilterInput = document.getElementById('requestor-filter-input');
+      const moduleFilterInput = document.getElementById('module-filter-input');
+      const groupFilterInput = document.getElementById('group-filter-input');
+      const filterButton = document.getElementById('filter-button');
+      const clearFilterButton = document.getElementById('clear-filter-button');
+      const dataSourceContainer = document.getElementById('data-source-container');
+      const filterContainer = document.getElementById('filter-container');
+      const loadApiButton = document.getElementById('load-api-button');
+      const loadCsvButton = document.getElementById('load-csv-button');
+      const csvFileInput = document.getElementById('csv-file-input');
+
+      // --- State ---
+      let allEvents = [];
+
+      // --- Core Functions ---
+
+      function processAndLoadData(dataArray) {
+        console.log("Processing data:", dataArray);
+        if (!Array.isArray(dataArray)) {
+          alert("Failed to process data. Expected an array.");
+          return;
+        }
+
+        allEvents = dataArray.map(item => {
+          const dateString = item['Dato oppstod'];
+          if (!dateString) {
+              console.warn("Skipping item due to missing 'Dato oppstod':", item);
+              return null;
+          }
+          const parts = dateString.match(/(\d{2})\.(\d{2})\.(\d{4})[ T](\d{2}):(\d{2}):(\d{2})/);
+          let startDate = null;
+          if (parts) {
+              startDate = new Date(parts[3], parts[2] - 1, parts[1], parts[4], parts[5], parts[6]);
+          } else {
+              startDate = new Date(dateString);
+          }
+          if (!startDate || isNaN(startDate.getTime())) {
+              console.warn("Skipping item due to invalid or unparsable date:", dateString, item);
+              return null;
+          }
+
+          let color;
+          if (typeof item.Handling === 'string') {
+              if (item.Handling === 'Deny Entitlement Revocation Request') { color = 'orange'; }
+              else if (item.Handling === 'Approve Entitlement Revocation Request') { color = 'pink'; }
+              else if (item.Handling === 'Approve Entitlement Grant Request') { color = '#61E43A'; }
+              else if (item.Handling.endsWith('Granted')) { color = 'green'; }
+              else if (item.Handling.endsWith('Revoked')) { color = 'red'; }
+          }
+
+          const groupNameText = (item.Modul === 'Groups' && item.groupName) ? `(${item.groupName})` : '';
+          const title = `${item.Handling || 'N/A'} ${item.requestableName || ''} ${groupNameText} (Req by: ${item.requestorName || 'N/A'}) to user: ${item['Mål'] || 'N/A'}`;
+
+          return {
+              title: title,
+              start: startDate,
+              color: color,
+              extendedProps: {
+                  requestableName: item.requestableName || '',
+                  mal: item['Mål'] || '',
+                  requestorName: item.requestorName || '',
+                  modul: item['Modul'] || '',
+                  groupName: item.groupName || ''
+              }
+          };
+        }).filter(Boolean);
+
+        calendar.getEventSources().forEach(source => source.remove());
+        calendar.addEventSource(allEvents);
+        console.log("All events loaded into calendar:", allEvents);
+
+        filterContainer.style.display = 'block';
+        dataSourceContainer.style.display = 'none';
+      }
+
+      function applyFilter() {
+        const nameFilterText = nameFilterInput.value.toLowerCase();
+        const userFilterText = userFilterInput.value.toLowerCase();
+        const requestorFilterText = requestorFilterInput.value.toLowerCase();
+        const moduleFilterText = moduleFilterInput.value.toLowerCase();
+        const groupFilterText = groupFilterInput.value.toLowerCase();
+
+        calendar.getEventSources().forEach(source => source.remove());
+
+        const filteredEvents = allEvents.filter(event => {
+          const requestableName = (event.extendedProps.requestableName || '').toLowerCase();
+          const malUser = (event.extendedProps.mal || '').toLowerCase();
+          const requestorName = (event.extendedProps.requestorName || '').toLowerCase();
+          const modul = (event.extendedProps.modul || '').toLowerCase();
+          const groupName = (event.extendedProps.groupName || '').toLowerCase();
+
+          const groupMatch = (groupFilterText === '' || // If group filter is empty, it always matches
+                              (modul === 'groups' && groupName.includes(groupFilterText))); // Otherwise, it must be a 'Groups' module AND match the groupName
+
+          return requestableName.includes(nameFilterText) && 
+                 malUser.includes(userFilterText) && 
+                 requestorName.includes(requestorFilterText) &&
+                 modul.includes(moduleFilterText) &&
+                 groupMatch;
+        });
+
+        calendar.addEventSource(filteredEvents);
+      }
+
+      // --- Data Loaders ---
+      function loadFromApi() {
+        console.log("Fetching events from API...");
+        fetch('http://localhost:3033/api')
+          .then(response => {
+            if (!response.ok) throw new Error('Network response was not ok: ' + response.statusText);
+            return response.json();
+          })
+          .then(data => {
+            processAndLoadData(data);
+          })
+          .catch(error => {
+            console.error('Error fetching from API:', error);
+            alert('Failed to load data from API. Check the console for details.');
+          });
+      }
+
+      function handleCsvFile(file) {
+        console.log("Parsing CSV file...");
+        Papa.parse(file, {
+            header: true,
+            skipEmptyLines: true,
+            complete: function(results) {
+                processAndLoadData(results.data);
+            },
+            error: function(error) {
+                console.error("CSV parsing error:", error);
+                alert("Error parsing CSV file. See console for details.");
+            }
+        });
+      }
+
+      // --- Calendar Initialization ---
+      const calendar = new FullCalendar.Calendar(calendarEl, {
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,timeGridDay,dayGridYear,listYear'
+        },
+        initialView: 'dayGridMonth',
+        eventClick: function(info) {
+          if (!info.view.type.startsWith('list')) {
+            info.jsEvent.preventDefault();
+            const event = info.event;
+            let content = `Event: ${event.title}\nStart: ${event.start ? event.start.toLocaleString() : 'N/A'}`;
+            if (event.end) content += `\nEnd: ${event.end.toLocaleString()}`;
+            alert(content);
+          }
+        }
+      });
+      calendar.render();
+
+      // --- Event Listeners ---
+      loadApiButton.addEventListener('click', loadFromApi);
+      loadCsvButton.addEventListener('click', () => csvFileInput.click());
+      csvFileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) handleCsvFile(e.target.files[0]);
+      });
+
+      filterButton.addEventListener('click', applyFilter);
+      clearFilterButton.addEventListener('click', () => {
+        nameFilterInput.value = '';
+        userFilterInput.value = '';
+        requestorFilterInput.value = '';
+        moduleFilterInput.value = '';
+        groupFilterInput.value = '';
+        applyFilter();
+      });
+      
+      [nameFilterInput, userFilterInput, requestorFilterInput, moduleFilterInput, groupFilterInput].forEach(input => {
+        input.addEventListener('keyup', (e) => {
+          if (e.key === 'Enter') applyFilter();
+        });
+      });
+    });
+  </script>
+</body>
+</html>
