@@ -9,7 +9,7 @@
     <link href="https://unpkg.com/tabulator-tables@5.4.4/dist/css/tabulator.min.css" rel="stylesheet">
     <script type="text/javascript" src="https://unpkg.com/tabulator-tables@5.4.4/dist/js/tabulator.min.js"></script>
     <script type="text/javascript" src="https://oss.sheetjs.com/sheetjs/xlsx.full.min.js"></script>
-       <script defer src="https://cloud.umami.is/script.js" data-website-id="db8120ea-7073-4a37-894d-8185dc1c3313"></script>
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="db8120ea-7073-4a37-894d-8185dc1c3313"></script>
     <script src="https://cc.tnixt.com/tn_ek_ClickClient.js" defer></script>
 
     <style>
@@ -173,6 +173,10 @@ config:
                         cell.getElement().style.color = 'red';
                     } else if (value === 'Disable Account') {
                         cell.getElement().style.backgroundColor = '#ff9100';
+                       } else if (value === 'Approve Entitlement Grant Request') {
+                        cell.getElement().style.backgroundColor = 'lightgreen'; 
+                             } else if (value === 'Deny Entitlement Grant Request') {
+                        cell.getElement().style.backgroundColor = 'orange';       
                     } else if (value.endsWith('Granted')) {
                         cell.getElement().style.color = 'green';
                     }
