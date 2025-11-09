@@ -173,9 +173,11 @@ config:
                         cell.getElement().style.color = 'red';
                     } else if (value === 'Disable Account') {
                         cell.getElement().style.backgroundColor = '#ff9100';
-                       } else if (value === 'Approve Entitlement Grant Request') {
+                    } else if (value === 'Approve Entitlement Grant Request') {
                         cell.getElement().style.backgroundColor = 'lightgreen'; 
-                             } else if (value === 'Deny Entitlement Grant Request') {
+                     } else if (value === 'Request Entitlement Grant') {
+                        cell.getElement().style.backgroundColor = '#D6FCBB';     
+                    } else if (value === 'Deny Entitlement Grant Request') {
                         cell.getElement().style.backgroundColor = 'orange';       
                     } else if (value.endsWith('Granted')) {
                         cell.getElement().style.color = 'green';
