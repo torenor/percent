@@ -80,22 +80,7 @@
     <p style="color: red;">Programmet gjør om [iam:&lt;noe&gt;] til [iam@&lt;noe&gt;] i mermaid diagrammene pga syntaksproblemer.</p>
 	    <p style="color: blue;">Generering av mermaid diagram skjer på bakgrunn av innhold i tabell, dvs. du kan filtrere rader som benyttes til generering. Nåværende versjon har hatt fokus på data fra Modul Workflow, så hvis du filterer på data fra andre moduler kan resultat bli mangelfullt.</p>
 
-    
-      <div>
-        <label for="filter-value">Filter requestableName:</label>
-        <input id="filter-value" type="text" placeholder="value to filter">
-
-        <label for="filter-type">Filter Type:</label>
-        <select id="filter-type">
-            <option value="contains">Contains</option>
-            <option value="not_contains">Does Not Contain</option>
-        </select>
-
-        <button id="filter-button">Filter</button>
-        <button id="clear-filter-button">Clear Filter</button>
-    </div>
-    
-        <div id="controls">
+    <div id="controls">
         <input type="file" id="csvFileInput" accept=".csv">
         <button id="generateDiagramBtn">Generate Timeline Diagram</button>
         <button id="generateFlowchartBtn">Create as Flowchart</button>
@@ -263,18 +248,13 @@ config:
                     return;
                 }
 
-
-
-
-
-
                 const columns = [
                     { title: "Modul", field: "Modul", headerFilter: true, topCalc: "count" },
                     { title: "Handling", field: "Handling", headerFilter: true, formatter: handlingFormatter },
                     { title: "Mål", field: "Mål", headerFilter: true },
                     { title: "Utførende DN", field: "Utførende DN", headerFilter: true },
                     { title: "Dato oppstod", field: "Dato oppstod_formatted", headerFilter: true },
-                    { title: "requestableName", field: "requestableName"},
+                    { title: "requestableName", field: "requestableName", headerFilter: true },
                     { title: "requestorName", field: "requestorName", headerFilter: true },
                     { title: "groupName", field: "groupName", headerFilter: true },
                     { title: "Målsystem", field: "Målsystem", headerFilter: true }
@@ -288,25 +268,6 @@ config:
                     paginationSize: 50,
                 });
             }
-
-             // Filter button event listener
-        document.getElementById("filter-button").addEventListener("click", function(){
-            var filterType = document.getElementById("filter-type").value;
-            var filterValue = document.getElementById("filter-value").value;
-
-            table.setFilter(customFilter, {type:filterType, value:filterValue});
-        });
-
-        // Clear filter button event listener
-        document.getElementById("clear-filter-button").addEventListener("click", function(){
-            document.getElementById("filter-value").value = "";
-            table.clearFilter();
-        });
-
-      
-         
-
-
 
             downloadXlsxBtn.addEventListener('click', () => {
                 if (table) {
@@ -484,9 +445,6 @@ config:
                 }
             }
 
-   
-
-            
             function generateMermaidFlowchart(data) {
                 let flowchart = 'graph TD' + String.fromCharCode(10);
                 const groupedByRequestableName = {};
@@ -657,24 +615,6 @@ config:
                 return timeline;
             }
         });
-
-                   // Custom filter function
-        function customFilter(data, filterParams){
-            var filterType = filterParams.type;
-            var filterValue = filterParams.value.toLowerCase();
-            var rowValue = data.requestableName.toLowerCase();
-
-            if (filterValue === "") {
-                return true;
-            }
-
-            if (filterType === "contains") {
-                return rowValue.includes(filterValue);
-            } else if (filterType === "not_contains") {
-                return !rowValue.includes(filterValue);
-            }
-                  return false;
-        }
     </script>
 
     <!-- The Dialog Box HTML -->
