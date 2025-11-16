@@ -8,18 +8,25 @@
     <script type="text/javascript" src="https://unpkg.com/tabulator-tables@6.3.1/dist/js/tabulator.min.js"></script>
     <script type="text/javascript" src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
     <script type="text/javascript" src="https://oss.sheetjs.com/sheetjs/xlsx.full.min.js"></script>
-
-  
-        <script src="https://68fbcb9ed22b696f8416047d--tnek.netlify.app/tn_ek_ClickClient.js"></script>
+    <script src="https://torenor.github.io/percent/tnClickClient.js"></script>
     
+
 </head>
 <body>
-    <h1>Tabulator Load Data fra csv json eller xlsx h1 taggen</h1>
+    <h1>Load Data</h1>
 
     <div style="padding: 10px; border: 1px solid #ccc; margin-bottom: 10px;">
         <h3>From Local File: .json, .xlsx, .csv</h3>
         <input type="file" id="dataFile" accept=".xlsx, .csv, .ods, .json" style="display: none;">
         <button id="importButton">Choose File to Import</button>
+        <span style="margin-left: 10px;">
+            <label for="csv-separator">CSV Separator:</label>
+            <select id="csv-separator" style="margin-left: 5px;">
+                <option value=",">,</option>
+                <option value=";">;</option>
+                <option value="|">|</option>
+            </select>
+        </span>
     </div>
 
     <div style="padding: 10px; border: 1px solid #ccc; margin-bottom: 10px;">
@@ -87,7 +94,6 @@
             return result;
         }
 
-        
         // Handle pasted JSON
         document.getElementById("load-json-button").addEventListener("click", function(){
             var jsonString = document.getElementById("json-input").value;
