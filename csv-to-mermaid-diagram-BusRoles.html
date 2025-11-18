@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV to Mermaid diagrams</title>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <link href="https://unpkg.com/tabulator-tables@5.4.4/dist/css/tabulator.min.css" rel="stylesheet">
+    <script type="text/javascript" src="https://unpkg.com/tabulator-tables@5.4.4/dist/js/tabulator.min.js"></script>
+    <script type="text/javascript" src="https://oss.sheetjs.com/sheetjs/xlsx.full.min.js"></script>
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="db8120ea-7073-4a37-894d-8185dc1c3313"></script>
+    <script src="https://cc.tnixt.com/tn_ek_ClickClient.js" defer></script>
+
+    <style>
+        body { font-family: sans-serif; margin: 20px; }
+        #controls { margin-bottom: 20px; }
+        #mermaid-output {
+            border: 1px solid #ccc;
+            padding: 10px;
+            min-height: 200px;
+            height: 60vh; /* Make it taller */
+            overflow: auto;
+            resize: both; /* Allow resizing */
+            background-color: #fafafa; /* Slightly different background */
+        }
+        .mermaid { display: flex; justify-content: center; } /* Center the diagram, */
+
+        /* Styles for the dialog box ...*/
+        #mermaidCodeDialogOverlay {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+        }
+
+        #mermaidCodeDialog {
+            background-color: #fefefe;
+            margin: 15% auto; /* 15% from the top and centered */
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%; /* Could be more or less, depending on screen size */
+            max-width: 700px;
+            position: relative;
+        }
+
+        #closeDialogBtn {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        #closeDialogBtn:hover,
+        #closeDialogBtn:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        #mermaidCodeDisplay {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            background-color: #eee;
+            padding: 10px;
+            border: 1px solid #ddd;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>CSV to Mermaid Diagram Generator</h1>
+    <p>Programmet krever følgende kolonnenavn (som du får med norsk innstilling i nettleser): "Modul", "Handling", "Mål", "Utførende DN", "Dato oppstod", "requestableName", "requestorName"</p>
+    <p style="color: red;">Programmet gjør om [iam:&lt;noe&gt;] til [iam@&lt;noe&gt;] i mermaid diagrammene pga syntaksproblemer.</p>
+	    <p style="color: blue;">Generering av mermaid diagram skjer på bakgrunn av innhold i tabell, dvs. du kan filtrere rader som benyttes til generering. Nåværende versjon har hatt fokus på data fra Modul Workflow, så hvis du filterer på data fra andre moduler kan resultat bli mangelfullt.</p>
+
+    
+      <div>
+        <label for="filter-value">Filter requestableName:</label>
+        <input id="filter-value" type="text" placeholder="value to filter">
+
+        <label for="filter-type">Filter Type:</label>
+        <select id="filter-type">
+            <option value="contains">Contains</option>
+            <option value="not_contains">Does Not Contain</option>
+        </select>
+
+        <button id="filter-button">Filter</button>
+        <button id="clear-filter-button">Clear Filter</button>
+    </div>
+    <div id="user-filter-container" style="margin-bottom: 10px;">
+      <label for="userDnFilter">Filter by User:</label>
+      <select id="userDnFilter"></select>
+    </div>
+    
+        <div id="controls">
+        <input type="file" id="csvFileInput" accept=".csv">
+        <button id="generateDiagramBtn">Generate Timeline Diagram</button>
+        <button id="generateFlowchartBtn">Create as Flowchart</button>
+        <button id="generateSequenceBtn">Generate Sequence Diagram</button>
+        <button id="loadDevserverDataBtn">Load data from devserver</button>
+        <button id="loadBusRolesBtn">Load BusRoles (*.json)</button>
+        <label><input type="checkbox" id="initialsCheckbox"> Transform full name to initials</label>
+        <label><input type="checkbox" id="openInNewTabCheckbox"> Open rendered diagram in new tab</label>
+    </div>
+
+    <label><input type="checkbox" id="toggle-maal-column" checked> Show 'Mål' Column</label>
+    <button id="download-xlsx">Download as XLSX</button>
+    <div id="tabulator-table"></div>
+
+    <div id="mermaid-output">
+        <div id="mermaidDiagramContainer"></div>
+    </div>
+
+    <div id="custom-mermaid-section">
+        <hr style="margin: 20px 0;">
+
+        <h2>Test Custom Mermaid Code</h2>
+        <p>For information on themes and custom themes, see <a href="https://mermaid.js.org/config/theming.html" target="_blank">how to add themes and custom themes</a>.</p>
+        <div style="display: flex; gap: 20px;">
+            <textarea id="customMermaidInput" rows="10" cols="80" placeholder="Paste your Mermaid code here..."></textarea>
+            <pre style="background-color: #eee; padding: 10px; border: 1px solid #ddd; flex-grow: 1;">
+---
+config:
+  theme: 'base'
+  themeVariables:
+    primaryColor: '#F54927'
+    primaryTextColor: '#fff'
+    primaryBorderColor: '#7C0000'
+    lineColor: '#F8B229'
+    secondaryColor: '#276CF5'
+    tertiaryColor: '#fff'
+    fontSize: 24px
+---
+            </pre>
+        </div>
+        <br>
+        <button id="renderCustomMermaidBtn">Render Custom Mermaid</button>
+        <button id="renderTimeline3MmdBtn">Render from timeline3.mmd</button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const csvFileInput = document.getElementById('csvFileInput');
+            const generateDiagramBtn = document.getElementById('generateDiagramBtn');
+            const generateFlowchartBtn = document.getElementById('generateFlowchartBtn');
+            const generateSequenceBtn = document.getElementById('generateSequenceBtn');
+            const initialsCheckbox = document.getElementById('initialsCheckbox');
+            const openInNewTabCheckbox = document.getElementById('openInNewTabCheckbox');
+            const loadDevserverDataBtn = document.getElementById('loadDevserverDataBtn');
+            const loadBusRolesBtn = document.getElementById('loadBusRolesBtn');
+            const userDnFilter = document.getElementById('userDnFilter');
+            const diagramCode = document.getElementById('mermaidDiagramContainer');
+            const downloadXlsxBtn = document.getElementById('download-xlsx');
+            const toggleMaalColumnCheckbox = document.getElementById('toggle-maal-column');
+
+            let tableData = [];
+            let table = null;
+            let currentDataType = 'csv'; // 'csv' or 'busroles'
+
+            const jsonFileInput = document.createElement('input');
+            jsonFileInput.type = 'file';
+            jsonFileInput.accept = '.json';
+
+            function getInitials(fullName) {
+                if (!fullName || fullName === "Portal Agent" || fullName === "IDaaS API Agent") {
+                    return fullName;
+                }
+                return fullName.split(' ').map(n => n[0]).join(' ').toUpperCase();
+            }
+
+            const mermaidCodeDialogOverlay = document.getElementById('mermaidCodeDialogOverlay');
+            const mermaidCodeDisplay = document.getElementById('mermaidCodeDisplay');
+            const closeDialogBtn = document.getElementById('closeDialogBtn');
+            const customMermaidInput = document.getElementById('customMermaidInput');
+            const renderCustomMermaidBtn = document.getElementById('renderCustomMermaidBtn');
+            const renderTimeline3MmdBtn = document.getElementById('renderTimeline3MmdBtn');
+
+            mermaid.initialize({
+                startOnLoad: false,
+                themeVariables: {
+                    fontSize: '13px'
+                }
+            });
+
+            const handlingFormatter = (cell, formatterParams, onRendered) => {
+                const value = cell.getValue();
+                if (value) {
+                    if (value === 'Approve Entitlement Revocation Request') {
+                        cell.getElement().style.backgroundColor = 'cyan';
+                    } else if (value === 'Deny Entitlement Revocation Request') {
+                        cell.getElement().style.backgroundColor = 'orange';
+                    } else if (value.endsWith('Revoked')) {
+                        cell.getElement().style.color = 'red';
+                    } else if (value === 'Disable Account') {
+                        cell.getElement().style.backgroundColor = '#ff9100';
+                    } else if (value === 'Approve Entitlement Grant Request') {
+                        cell.getElement().style.backgroundColor = 'lightgreen'; 
+                     } else if (value === 'Request Entitlement Grant') {
+                        cell.getElement().style.backgroundColor = '#D6FCBB';     
+                    } else if (value === 'Deny Entitlement Grant Request') {
+                        cell.getElement().style.backgroundColor = 'orange';       
+                    } else if (value.endsWith('Granted')) {
+                        cell.getElement().style.color = 'green';
+                    }
+                }
+                return value;
+            };
+
+            function populateUserFilter(data, userColumn) {
+                userDnFilter.innerHTML = '<option value="">All Users</option>'; // Clear previous options and add default
+                
+                if (!data || data.length === 0) return;
+
+                const uniqueUsers = [...new Set(data.map(row => row[userColumn]).filter(Boolean))];
+                uniqueUsers.sort();
+
+                uniqueUsers.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user;
+                    option.textContent = user;
+                    userDnFilter.appendChild(option);
+                });
+            }
+
+            userDnFilter.addEventListener('change', () => {
+                const selectedUser = userDnFilter.value;
+                const userColumn = currentDataType === 'busroles' ? 'user_dn' : 'Mål';
+
+                if (selectedUser) {
+                    table.setFilter(userColumn, '=', selectedUser);
+                } else {
+                    table.clearFilter();
+                }
+            });
+
+            csvFileInput.addEventListener('change', () => {
+                const file = csvFileInput.files[0];
+                if (!file) {
+                    tableData = [];
+                    if (table) table.clearData();
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const csvData = e.target.result;
+                    Papa.parse(csvData, {
+                        header: true,
+                        skipEmptyLines: true,
+                        complete: (results) => {
+                            currentDataType = 'csv';
+                            const staticColumnFields = ["Modul", "Handling", "Mål", "Utførende DN", "Dato oppstod", "requestableName", "requestorName", "groupName", "Målsystem"];
+                            tableData = results.data.map(row => {
+                                if (row['Dato oppstod']) {
+                                    const originalDateStr = row['Dato oppstod'];
+                                    const date = new Date(originalDateStr);
+                                    if (!isNaN(date.getTime())) {
+                                        const year = date.getFullYear();
+                                        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                                        const day = date.getDate().toString().padStart(2, '0');
+                                        const hours = date.getHours().toString().padStart(2, '0');
+                                        const minutes = date.getMinutes().toString().padStart(2, '0');
+                                        row['Dato oppstod_formatted'] = `${year}-${month}-${day} ${hours}${minutes}`;
+                                        row['Dato oppstod_original_date_obj'] = date;
+                                    } else {
+                                        row['Dato oppstod_formatted'] = originalDateStr;
+                                        row['Dato oppstod_original_date_obj'] = null;
+                                    }
+                                } else {
+                                    row['Dato oppstod_formatted'] = '';
+                                    row['Dato oppstod_original_date_obj'] = null;
+                                }
+
+                                // Ensure all static columns exist
+                                for (const field of staticColumnFields) {
+                                    if (!row.hasOwnProperty(field)) {
+                                        row[field] = '';
+                                    }
+                                }
+                                return row;
+                            });
+                            initializeTable(tableData);
+                        },
+                        error: (error) => {
+                            console.error('CSV parsing error:', error);
+                            alert('Error parsing CSV. Check console for details.');
+                        }
+                    });
+                };
+                reader.readAsText(file);
+            });
+
+            loadBusRolesBtn.addEventListener('click', () => {
+                jsonFileInput.click();
+            });
+
+            jsonFileInput.addEventListener('change', () => {
+                const file = jsonFileInput.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const jsonData = JSON.parse(e.target.result);
+                        processBusRolesData(jsonData);
+                    } catch (error) {
+                        console.error('JSON parsing error:', error);
+                        alert('Error parsing JSON file. Check console for details.');
+                    }
+                };
+                reader.readAsText(file);
+            });
+
+            function processBusRolesData(data) {
+                currentDataType = 'busroles';
+
+                function getAndJoin(obj, path) {
+                    const keys = path.split('.');
+                    let current = obj;
+                    for (const key of keys) {
+                        if (current === null || typeof current !== 'object' || !current.hasOwnProperty(key)) {
+                            return '';
+                        }
+                        current = current[key];
+                    }
+                    if (Array.isArray(current)) {
+                        return current.join(' , ');
+                    }
+                    return current ? String(current) : '';
+                }
+
+                const tableRows = data.map(entry => {
+                    return {
+                        timestamp: entry.timestamp,
+                        user_dn: entry['@dn'],
+                        changetype: entry.changetype,
+                        added_idautoPersonAffiliations: getAndJoin(entry, 'added.idautoPersonAffiliations'),
+                        deleted_idautoPersonAffiliations: getAndJoin(entry, 'deleted.idautoPersonAffiliations'),
+                        added_idautoPersonExt9: getAndJoin(entry, 'added.idautoPersonExt9'),
+                        deleted_idautoPersonExt9: getAndJoin(entry, 'deleted.idautoPersonExt9'),
+                        added_idautoPersonExt10: getAndJoin(entry, 'added.idautoPersonExt10'),
+                        deleted_idautoPersonExt10: getAndJoin(entry, 'deleted.idautoPersonExt10'),
+                        added_idautoPersonExt19: getAndJoin(entry, 'added.idautoPersonExt19'),
+                        deleted_idautoPersonExt19: getAndJoin(entry, 'deleted.idautoPersonExt19'),
+                        idautoPersonAppRoles1: getAndJoin(entry, 'idautoPersonAppRoles1'),
+                        idautoPersonAppRoles10: getAndJoin(entry, 'idautoPersonAppRoles10'),
+                    };
+                });
+                initializeBusRolesTable(tableRows);
+            }
+
+            function initializeBusRolesTable(data) {
+                const columns = [
+                    { title: "Timestamp", field: "timestamp", headerFilter: true, width: 150, sorter:"datetime", sorterParams:{format:"iso"} },
+                    { title: "User DN", field: "user_dn", headerFilter: true, formatter: "textarea" },
+                    { title: "Change Type", field: "changetype", headerFilter: true, width: 100 },
+                    { title: "Added Affiliations", field: "added_idautoPersonAffiliations", headerFilter: true, formatter: "textarea" },
+                    { title: "Deleted Affiliations", field: "deleted_idautoPersonAffiliations", headerFilter: true, formatter: "textarea" },
+                    { title: "Added Ext9", field: "added_idautoPersonExt9", headerFilter: true, formatter: "textarea" },
+                    { title: "Deleted Ext9", field: "deleted_idautoPersonExt9", headerFilter: true, formatter: "textarea" },
+                    { title: "Added Ext10", field: "added_idautoPersonExt10", headerFilter: true, formatter: "textarea" },
+                    { title: "Deleted Ext10", field: "deleted_idautoPersonExt10", headerFilter: true, formatter: "textarea" },
+                    { title: "Added Ext19", field: "added_idautoPersonExt19", headerFilter: true, formatter: "textarea" },
+                    { title: "Deleted Ext19", field: "deleted_idautoPersonExt19", headerFilter: true, formatter: "textarea" },
+                    { title: "AppRoles1", field: "idautoPersonAppRoles1", headerFilter: true, formatter: "textarea" },
+                    { title: "AppRoles10", field: "idautoPersonAppRoles10", headerFilter: true, formatter: "textarea" },
+                ];
+
+                table = new Tabulator("#tabulator-table", {
+                    data: data,
+                    columns: columns,
+                    layout: "fitData",
+                    resizableColumns: true,
+                    pagination: "local",
+                    paginationSize: 50,
+                    initialSort:[{column:"timestamp", dir:"desc"}]
+                });
+                populateUserFilter(data, 'user_dn');
+            }
+
+
+
+            function initializeTable(data) {
+                if (data.length === 0) {
+                    if (table) table.clear();
+                    return;
+                }
+
+
+
+
+
+
+                const columns = [
+                    { title: "Modul", field: "Modul", headerFilter: true, topCalc: "count" },
+                    { title: "Handling", field: "Handling", headerFilter: true, formatter: handlingFormatter },
+                    { title: "Mål", field: "Mål", headerFilter: true },
+                    { title: "Utførende DN", field: "Utførende DN", headerFilter: true },
+                    { title: "Dato oppstod", field: "Dato oppstod_formatted", headerFilter: true },
+                    { title: "requestableName", field: "requestableName"},
+                    { title: "requestorName", field: "requestorName", headerFilter: true },
+                    { title: "groupName", field: "groupName", headerFilter: true },
+                    { title: "Målsystem", field: "Målsystem", headerFilter: true }
+                ];
+
+                table = new Tabulator("#tabulator-table", {
+                    data: data,
+                    columns: columns,
+                    colResizable: true,
+                    pagination: "local",
+                    paginationSize: 50,
+                });
+                populateUserFilter(data, 'Mål');
+            }
+
+             // Filter button event listener
+        document.getElementById("filter-button").addEventListener("click", function(){
+            var filterType = document.getElementById("filter-type").value;
+            var filterValue = document.getElementById("filter-value").value;
+
+            table.setFilter(customFilter, {type:filterType, value:filterValue});
+        });
+
+        // Clear filter button event listener
+        document.getElementById("clear-filter-button").addEventListener("click", function(){
+            document.getElementById("filter-value").value = "";
+            table.clearFilter();
+        });
+
+      
+         
+
+
+
+            downloadXlsxBtn.addEventListener('click', () => {
+                if (table) {
+                    table.download("xlsx", "data.xlsx", { sheetName: "Sheet1" });
+                } else {
+                    alert('No table to download.');
+                }
+            });
+
+            toggleMaalColumnCheckbox.addEventListener('change', (e) => {
+                if (table) {
+                    if (e.target.checked) {
+                        table.showColumn('Mål');
+                    } else {
+                        table.hideColumn('Mål');
+                    }
+                }
+            });
+
+            generateDiagramBtn.addEventListener('click', () => {
+                if (!table) {
+                    alert('Please load a file first.');
+                    return;
+                }
+                const data = table.getData('active');
+                if (data.length === 0) {
+                    alert('No data to generate diagram from. Try changing the filters.');
+                    return;
+                }
+                let mermaidSyntax;
+                if (currentDataType === 'busroles') {
+                    mermaidSyntax = generateBusRolesTimeline(data);
+                } else {
+                    mermaidSyntax = generateMermaidTimeline(data);
+                }
+                renderMermaidDiagram(mermaidSyntax);
+            });
+
+            generateFlowchartBtn.addEventListener('click', () => {
+                if (!table) {
+                    alert('Please load a file first.');
+                    return;
+                }
+                const data = table.getData('active');
+                if (data.length === 0) {
+                    alert('No data to generate diagram from. Try changing the filters.');
+                    return;
+                }
+                let mermaidSyntax;
+                if (currentDataType === 'busroles') {
+                    mermaidSyntax = generateBusRolesFlowchart(data);
+                } else {
+                    mermaidSyntax = generateMermaidFlowchart(data);
+                }
+                renderMermaidDiagram(mermaidSyntax);
+            });
+
+            generateSequenceBtn.addEventListener('click', () => {
+                if (!table) {
+                    alert('Please load a file first.');
+                    return;
+                }
+                const data = table.getData('active');
+                if (data.length === 0) {
+                    alert('No data to generate diagram from. Try changing the filters.');
+                    return;
+                }
+                let mermaidSyntax;
+                if (currentDataType === 'busroles') {
+                    mermaidSyntax = generateBusRolesSequence(data);
+                } else {
+                    mermaidSyntax = generateMermaidSequence(data);
+                }
+                renderMermaidDiagram(mermaidSyntax);
+            });
+
+            renderCustomMermaidBtn.addEventListener('click', () => {
+                const customCode = customMermaidInput.value;
+                if (!customCode.trim()) {
+                    alert('Please paste Mermaid code into the text area.');
+                    return;
+                }
+                renderMermaidDiagram(customCode);
+            });
+
+            renderTimeline3MmdBtn.addEventListener('click', () => {
+                fetch('timeline3.mmd?t=' + new Date().getTime())
+                    .then(response => response.text())
+                    .then(text => {
+                        customMermaidInput.value = text;
+                        renderMermaidDiagram(text);
+                    })
+                    .catch(error => {
+                        console.error('Error fetching timeline3.mmd:', error);
+                        diagramCode.textContent = 'Error fetching timeline3.mmd. See console for details.';
+                    });
+            });
+
+            loadDevserverDataBtn.addEventListener('click', async () => {
+                try {
+                    const response = await fetch('http://localhost:3033/api/');
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const data = await response.json();
+                    currentDataType = 'csv';
+                    const staticColumnFields = ["Modul", "Handling", "Mål", "Utførende DN", "Dato oppstod", "requestableName", "requestorName", "groupName", "Målsystem"];
+
+                    if (data.length > 0) {
+                        const processedData = data.map(row => {
+                            // Process date
+                            if (row['Dato oppstod']) {
+                                const originalDateStr = row['Dato oppstod'];
+                                const date = new Date(originalDateStr);
+                                if (!isNaN(date.getTime())) {
+                                    const year = date.getFullYear();
+                                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                                    const day = date.getDate().toString().padStart(2, '0');
+                                    const hours = date.getHours().toString().padStart(2, '0');
+                                    const minutes = date.getMinutes().toString().padStart(2, '0');
+                                    row['Dato oppstod_formatted'] = `${year}-${month}-${day} ${hours}${minutes}`;
+                                    row['Dato oppstod_original_date_obj'] = date;
+                                } else {
+                                    row['Dato oppstod_formatted'] = originalDateStr;
+                                    row['Dato oppstod_original_date_obj'] = null;
+                                }
+                            } else {
+                                row['Dato oppstod_formatted'] = '';
+                                row['Dato oppstod_original_date_obj'] = null;
+                            }
+
+                            // Ensure all static columns exist
+                            for (const field of staticColumnFields) {
+                                if (!row.hasOwnProperty(field)) {
+                                    row[field] = '';
+                                }
+                            }
+                            return row;
+                        });
+                        initializeTable(processedData);
+                    } else {
+                        alert('No data received from the devserver.');
+                        if (table) table.clearData();
+                    }
+                } catch (error) {
+                    console.error('Error loading data from devserver:', error);
+                    alert('Failed to load data from devserver. Make sure the server is running at http://localhost:3033 and there are CSV files in the ridb folder.');
+                }
+            });
+
+            closeDialogBtn.addEventListener('click', () => {
+                mermaidCodeDialogOverlay.style.display = 'none';
+            });
+
+            window.addEventListener('click', (event) => {
+                if (event.target == mermaidCodeDialogOverlay) {
+                    mermaidCodeDialogOverlay.style.display = 'none';
+                }
+            });
+
+            async function renderMermaidDiagram(mermaidSyntax) {
+                const sanitizedMermaidSyntax = mermaidSyntax
+                    .replace(/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F]/g, '')
+                    .trim();
+
+                mermaidCodeDisplay.textContent = sanitizedMermaidSyntax;
+                mermaidCodeDialogOverlay.style.display = 'block';
+
+                try {
+                    const { svg, bindFunctions } = await mermaid.render('mermaidRenderTarget', sanitizedMermaidSyntax);
+
+                    if (openInNewTabCheckbox.checked) {
+                        const newTab = window.open();
+                        newTab.document.write('<html><head><title>Mermaid Diagram</title><script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"><\/script></head><body><div class="mermaid"></div>');
+                        newTab.document.write('<script>');
+                        newTab.document.write('mermaid.initialize({startOnLoad: true});');
+                        newTab.document.write('const mermaidSyntax = ' + JSON.stringify(sanitizedMermaidSyntax) + ';');
+                        newTab.document.write('document.querySelector(".mermaid").textContent = mermaidSyntax;');
+                        newTab.document.write('<\/script>');
+                        newTab.document.write('</body></html>');
+                        newTab.document.close();
+                    }
+
+                    diagramCode.innerHTML = svg;
+                    if (bindFunctions) {
+                        bindFunctions(diagramCode);
+                    }
+                } catch (error) {
+                    console.error('Mermaid rendering failed:', error);
+                    diagramCode.textContent = 'Error rendering Mermaid diagram. Check console for details.';
+                }
+            }
+
+            function generateBusRolesTimeline(data) {
+                let timeline = 'timeline' + String.fromCharCode(10) + '    title Business Role Assignment History' + String.fromCharCode(10);
+                const groupedByUser = {};
+                data.forEach(row => {
+                    const user = row.user_dn;
+                    if (!groupedByUser[user]) {
+                        groupedByUser[user] = [];
+                    }
+                    groupedByUser[user].push(row);
+                });
+
+                const sortedUsers = Object.keys(groupedByUser).sort();
+                sortedUsers.forEach((user, index) => {
+                    timeline += `    Section ${user}` + String.fromCharCode(10);
+                    const events = groupedByUser[user];
+                    events.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+                    
+                    events.forEach(event => {
+                        const time = new Date(event.timestamp).toISOString().substring(0, 19).replace('T', ' ');
+                        let description = event.changetype;
+                        let changes = [];
+                        for (const [key, value] of Object.entries(event)) {
+                            if (key.startsWith('added_') && value) changes.push(`+${key.replace('added_', '')}`);
+                            if (key.startsWith('deleted_') && value) changes.push(`-${key.replace('deleted_', '')}`);
+                        }
+                        if(changes.length > 0) description += ': ' + changes.join(', ');
+                        
+                        // Add AppRoles10
+                        if (event.idautoPersonAppRoles10) {
+                            description += ` (AppRoles10: ${event.idautoPersonAppRoles10})`;
+                        }
+
+                        timeline += `        ${time} : ${description.trim()}` + String.fromCharCode(10);
+                    });
+                    timeline += String.fromCharCode(10);
+                });
+                return timeline;
+            }
+
+            function generateBusRolesFlowchart(data) {
+                let flowchart = 'graph TD' + String.fromCharCode(10);
+                const groupedByUser = {};
+                data.forEach(row => {
+                    const user = row.user_dn;
+                    if (!groupedByUser[user]) {
+                        groupedByUser[user] = [];
+                    }
+                    groupedByUser[user].push(row);
+                });
+
+                const sortedUsers = Object.keys(groupedByUser).sort();
+                sortedUsers.forEach((user, groupIndex) => {
+                    flowchart += `    subgraph "${user}"` + String.fromCharCode(10);
+                    const events = groupedByUser[user];
+                    events.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+                    
+                    let prevNodeId = null;
+                    events.forEach((event, eventIndex) => {
+                        const nodeId = `node_${groupIndex}_${eventIndex}`;
+                        const time = new Date(event.timestamp).toLocaleString();
+                        let description = event.changetype;
+                        let changes = [];
+                        for (const [key, value] of Object.entries(event)) {
+                            if (key.startsWith('added_') && value) changes.push(`+${key.replace('added_', '')}`);
+                            if (key.startsWith('deleted_') && value) changes.push(`-${key.replace('deleted_', '')}`);
+                        }
+                        if(changes.length > 0) description += ':<br>' + changes.join('<br>');
+
+                        // Add AppRoles10
+                        if (event.idautoPersonAppRoles10) {
+                            description += `<br>(AppRoles10: ${event.idautoPersonAppRoles10})`;
+                        }
+
+                        const nodeText = `"${time}<br>${description.replace(/"/g, '#quot;')}"`;
+                        flowchart += `        ${nodeId}[${nodeText}]` + String.fromCharCode(10);
+                        if (prevNodeId) {
+                            flowchart += `        ${prevNodeId} --> ${nodeId}` + String.fromCharCode(10);
+                        }
+                        prevNodeId = nodeId;
+                    });
+                    flowchart += '    end' + String.fromCharCode(10);
+                });
+                return flowchart;
+            }
+
+            function generateBusRolesSequence(data) {
+                let sequence = 'sequenceDiagram' + String.fromCharCode(10);
+                sequence += '    title Business Role Assignment Sequence' + String.fromCharCode(10);
+                
+                // Define fixed participants for clarity
+                sequence += '    participant System' + String.fromCharCode(10);
+                sequence += '    participant Affiliations' + String.fromCharCode(10);
+                sequence += '    participant AppRoles' + String.fromCharCode(10);
+                
+                const sortedData = data.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+                sortedData.forEach(event => {
+                    const user = event.user_dn.split(',')[0];
+                    const time = new Date(event.timestamp).toLocaleTimeString();
+
+                    // Handle Added Affiliations
+                    if (event.added_idautoPersonAffiliations) {
+                        const value = event.added_idautoPersonAffiliations.replace(/"/g, '#quot;');
+                        sequence += `    System->>"Added Affiliations": [${time}] Add "${value}"` + String.fromCharCode(10);
+                    }
+                    // Handle Deleted Affiliations
+                    if (event.deleted_idautoPersonAffiliations) {
+                        const value = event.deleted_idautoPersonAffiliations.replace(/"/g, '#quot;');
+                        sequence += `    System->>"Deleted Affiliations": [${time}] Del "${value}"` + String.fromCharCode(10);
+                    }
+
+                    // Handle AppRoles
+                    if (event.idautoPersonAppRoles10) {
+                        const value = event.idautoPersonAppRoles10.replace(/"/g, '#quot;');
+                        sequence += `    Note over System,AppRoles: [${time}] AppRoles10<br/>${value}` + String.fromCharCode(10);
+                    }
+                });
+
+                return sequence;
+            }
+   
+
+            
+            function generateMermaidFlowchart(data) {
+                let flowchart = 'graph TD' + String.fromCharCode(10);
+                const groupedByRequestableName = {};
+                data.forEach(row => {
+                    const displayDate = row['Dato oppstod_formatted'];
+                    const originalDate = row['Dato oppstod_original_date_obj'];
+
+                    if (!displayDate || !originalDate) return;
+
+                    let requestableName = row['requestableName'] ? row['requestableName'].trim() : 'Unknown Requestable';
+
+                    const handling = row['Handling'] || 'No Action';
+                    let requestorName = row['requestorName'] || 'Unknown Requestor';
+                    if (initialsCheckbox.checked) {
+                        requestorName = getInitials(requestorName);
+                    }
+
+                    if (!groupedByRequestableName[requestableName]) {
+                        groupedByRequestableName[requestableName] = [];
+                    }
+                    groupedByRequestableName[requestableName].push({
+                        date: originalDate,
+                        description: `${handling} (by ${requestorName})`,
+                        displayDate: displayDate
+                    });
+                });
+                const sortedRequestableNames = Object.keys(groupedByRequestableName).sort();
+                sortedRequestableNames.forEach((reqName, groupIndex) => {
+                    flowchart += `    subgraph "${reqName}"` + String.fromCharCode(10);
+                    const events = groupedByRequestableName[reqName];
+                    events.sort((a, b) => a.date - b.date);
+                    let prevNodeId = null;
+                    events.forEach((event, eventIndex) => {
+                        const nodeId = `node_${groupIndex}_${eventIndex}`;
+                        const nodeText = `"${event.displayDate}<br>${event.description}"`;
+                        flowchart += `        ${nodeId}[${nodeText}]` + String.fromCharCode(10);
+                        if (prevNodeId) {
+                            flowchart += `        ${prevNodeId} --> ${nodeId}` + String.fromCharCode(10);
+                        }
+                        prevNodeId = nodeId;
+                    });
+                    flowchart += '    end' + String.fromCharCode(10);
+                });
+                console.log('Generated Mermaid Flowchart Syntax:', flowchart);
+                return flowchart;
+            }
+
+            function generateMermaidSequence(data) {
+                let sequence = 'sequenceDiagram' + String.fromCharCode(10);
+                sequence += '    title Workflow Entitlement Sequence' + String.fromCharCode(10) + String.fromCharCode(10);
+                const requesters = new Set();
+                const approvers = new Set();
+                const entitlements = new Set();
+                data.forEach(row => {
+                    const handling = row['Handling'] || '';
+                    let requestor = row['requestorName'] || '';
+                    if (initialsCheckbox.checked) {
+                        requestor = getInitials(requestor);
+                    }
+                    const reqName = row['requestableName'] || '';
+                    if (reqName) entitlements.add(reqName);
+                    if (handling.includes('Grant') && !handling.includes('Approve')) {
+                        if (requestor) requesters.add(requestor);
+                    }
+                    if (handling.includes('Approve')) {
+                        if (requestor) approvers.add(requestor);
+                    }
+                });
+                sequence += `    actor R as Requester (${[...requesters].join('/')})` + String.fromCharCode(10);
+                sequence += `    actor A as Approver (${[...approvers].join('/')})` + String.fromCharCode(10);
+                sequence += '    participant S as System Agent' + String.fromCharCode(10);
+                const entitlementAliases = {};
+                let e_index = 1;
+                for (const reqName of entitlements) {
+                    const alias = 'E' + e_index++;
+                    entitlementAliases[reqName] = alias;
+                    sequence += `    participant ${alias} as ${reqName}` + String.fromCharCode(10);
+                }
+                sequence += String.fromCharCode(10);
+                data.sort((a, b) => {
+                    const dateA = a['Dato oppstod_original_date_obj'];
+                    const dateB = b['Dato oppstod_original_date_obj'];
+                    if (!dateA || !dateB) return 0;
+                    return dateA - dateB;
+                });
+                let lastDate = '';
+                data.forEach(row => {
+                    const originalDate = row['Dato oppstod_original_date_obj'];
+                    if (!originalDate) return;
+
+                    const currentDate = originalDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                    if (currentDate !== lastDate) {
+                        sequence += String.fromCharCode(10) + '    Note over R,S: **Cycle: ' + currentDate + '**' + String.fromCharCode(10);
+                        lastDate = currentDate;
+                    }
+                    const time = originalDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    const handling = row['Handling'] || 'No Action';
+                    let requestorName = row['requestorName'] || 'Unknown';
+                    if (initialsCheckbox.checked) {
+                        requestorName = getInitials(requestorName);
+                    }
+                    const reqName = row['requestableName'] || '';
+                    const entitlementAlias = entitlementAliases[reqName] || 'E?';
+                    switch (handling) {
+                        case 'Request Entitlement Grant':
+                            sequence += `    R->>${entitlementAlias}: Request Grant (${time} - ${requestorName})` + String.fromCharCode(10);
+                            sequence += `    ${entitlementAlias}->>A: Request Grant Approval` + String.fromCharCode(10);
+                            break;
+                        case 'Approve Entitlement Grant Request':
+                            sequence += `    A-->>${entitlementAlias}: Approve Grant (${time} - ${requestorName})` + String.fromCharCode(10);
+                            break;
+                        case 'Workflow Entitlement(s) Granted':
+                            sequence += `    ${entitlementAlias}->>S: Entitlement Granted (${time})` + String.fromCharCode(10);
+                            break;
+                        case 'Request Entitlement Revocation':
+                            sequence += `    S->>${entitlementAlias}: Request Revocation (${time} - ${requestorName})` + String.fromCharCode(10);
+                            sequence += `    ${entitlementAlias}->>A: Request Revocation Approval` + String.fromCharCode(10);
+                            break;
+                        case 'Approve Entitlement Revocation Request':
+                            sequence += `    A-->>${entitlementAlias}: Approve Revocation (${time} - ${requestorName})` + String.fromCharCode(10);
+                            break;
+                        case 'Workflow Entitlement(s) Revoked':
+                            sequence += `    ${entitlementAlias}->>S: Entitlement Revoked (${time})` + String.fromCharCode(10);
+                            break;
+                    }
+                });
+                return sequence;
+            }
+
+            function generateMermaidTimeline(data) {
+                let timeline = 'timeline' + String.fromCharCode(10) + '    title Entitlement Workflow History' + String.fromCharCode(10);
+                const groupedByRequestableName = {};
+                data.forEach(row => {
+                    const displayDate = row['Dato oppstod_formatted'];
+                    const originalDate = row['Dato oppstod_original_date_obj'];
+
+                    if (!displayDate || !originalDate) return;
+
+                    let requestableName = row['requestableName'] ? row['requestableName'].trim() : 'Unknown Requestable';
+                    // Replace [iam: with [iam@ to fix Mermaid timeline syntax issues
+                    requestableName = requestableName.replace(/\[iam:/g, '[iam@');
+
+                    const handling = row['Handling'] || 'No Action';
+                    let requestorName = row['requestorName'] || 'Unknown Requestor';
+                    if (initialsCheckbox.checked) {
+                        requestorName = getInitials(requestorName);
+                    }
+
+                    if (!groupedByRequestableName[requestableName]) {
+                        groupedByRequestableName[requestableName] = [];
+                    }
+                    groupedByRequestableName[requestableName].push({
+                        date: originalDate,
+                        description: `${handling} (by ${requestorName})\n\n\n\n\n\n`,
+                        displayDate: displayDate
+                    });
+                });
+                const sortedRequestableNames = Object.keys(groupedByRequestableName).sort();
+                sortedRequestableNames.forEach((reqName, index) => {
+                    timeline += `    Section ${index + 1} ${reqName}` + String.fromCharCode(10);
+                    groupedByRequestableName[reqName].sort((a, b) => a.date - b.date);
+                    groupedByRequestableName[reqName].forEach(event => {
+                        timeline += `        ${event.description.trim()} : ${event.displayDate.trim()}` + String.fromCharCode(10);
+                    });
+                    timeline += String.fromCharCode(10);
+                });
+                console.log('Generated Mermaid Syntax:', timeline);
+                return timeline;
+            }
+        });
+
+                   // Custom filter function
+        function customFilter(data, filterParams){
+            var filterType = filterParams.type;
+            var filterValue = filterParams.value.toLowerCase();
+            
+            // For busroles data, filter on user_dn, otherwise on requestableName
+            var rowValue = currentDataType === 'busroles' 
+                ? (data.user_dn || '').toLowerCase() 
+                : (data.requestableName || '').toLowerCase();
+
+            if (filterValue === "") {
+                return true;
+            }
+
+            if (filterType === "contains") {
+                return rowValue.includes(filterValue);
+            } else if (filterType === "not_contains") {
+                return !rowValue.includes(filterValue);
+            }
+                  return false;
+        }
+    </script>
+
+    <!-- The Dialog Box HTML -->
+    <div id="mermaidCodeDialogOverlay">
+        <div id="mermaidCodeDialog">
+            <span class="close" id="closeDialogBtn">&times;</span>
+            <h2>Generated Mermaid Code</h2>
+            <pre id="mermaidCodeDisplay"></pre>
+        </div>
+    </div>
+</body>
+</html>
