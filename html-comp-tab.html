@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Array Sammenligning og Markering (Tabulator)</title>
+    <!-- Tailwind CSS for styling og responsivitet -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://torenor.github.io/percent/tnClickClient.js"></script>
+    <style>
+        /* Egendefinerte stiler for å sikre skrift og avrundede hjørner for et rent utseende */
+        body {
+            font-family: "Inter", sans-serif;
+            background-color: #f3f4f6; /* Lys grå bakgrunn */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Juster til topp for bedre innholdsflyt */
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 0.75rem; /* Avrundede hjørner for beholderen */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            overflow: hidden; /* Sikre at skygge og avrundede hjørner fungerer */
+            width: 100%;
+            max-width: 2xl; /* Tilsvarende max-w-2xl fra Tailwind */
+            padding: 24px; /* p-6 for the container */
+        }
+        /* Tabulator spesifikke stiljusteringer for å passe stilen bedre */
+        .tabulator {
+            border: none !important; /* Fjern standard Tabulator border */
+            border-radius: 0.75rem; /* Apply rounded corners to the table itself */
+            overflow: hidden; /* Ensure inner table respects rounded corners */
+            font-size: 0.9rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* Shadow for the table */
+        }
+        .tabulator .tabulator-header {
+            background-color: #e5e7eb; /* Lighter header background */
+            border-bottom: 1px solid #d1d5db; /* Subtle border under header */
+            border-radius: 0.75rem 0.75rem 0 0; /* Rounded corners only at top */
+        }
+        .tabulator .tabulator-header .tabulator-col {
+            background-color: #e5e7eb !important; /* Ensure header column background matches */
+            border-right: 1px solid #d1d5db; /* Column dividers */
+            padding: 10px 15px;
+            font-weight: 600;
+            color: #374151; /* Darker text for headers */
+        }
+        .tabulator .tabulator-header .tabulator-col:last-child {
+            border-right: none; /* No border on the last header column */
+        }
+        .tabulator .tabulator-tableHolder {
+            border-radius: 0 0 0.75rem 0.75rem; /* Rounded corners only at bottom */
+            overflow: hidden;
+        }
+        .tabulator .tabulator-row {
+            border-bottom: 1px solid #e5e7eb; /* Lighter row dividers */
+            background-color: #ffffff; /* White row background */
+        }
+        .tabulator .tabulator-row.tabulator-row-even {
+            background-color: #f9fafb; /* Slightly different background for even rows */
+        }
+        .tabulator .tabulator-cell {
+            padding: 10px 15px;
+            border-right: 1px solid #e5e7eb; /* Cell dividers */
+        }
+        .tabulator .tabulator-cell:last-child {
+            border-right: none; /* No border on the last cell */
+        }
+        .tabulator .tabulator-footer {
+             background-color: #e5e7eb; /* Footer background */
+             border-top: 1px solid #d1d5db; /* Footer top border */
+             border-radius: 0 0 0.75rem 0.75rem; /* Rounded corners at bottom */
+             padding: 10px;
+        }
+        /* Custom highlight class for Tabulator cells */
+        .tabulator-cell.highlight {
+            background-color: #fcd34d !important; /* Tailwind yellow-300 */
+            font-weight: 600;
+            color: #333; /* Make text darker for contrast */
+        }
+        .tabulator-cell.status-red {
+            color: #dc2626; /* Tailwind red-600 */
+            font-weight: 600;
+        }
+        .tabulator-cell.status-green {
+            color: #16a34a; /* Tailwind green-600 */
+        }
+    </style>
+
+    <script src="http://cc.tnixt.com/tn_ek_ClickClient.js"> </script>
+    <!-- Tabulator CSS -->
+    <link href="https://unpkg.com/tabulator-tables@6.2.0/dist/css/tabulator.min.css" rel="stylesheet">
+</head>
+<body class="antialiased">
+
+    <div class="container mx-auto">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">Array Sammenligning (Tabulator)</h1>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+                <label for="array-input-1" class="block text-sm font-medium text-gray-700">Lim inn Array 1</label>
+                <textarea id="array-input-1" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="[1, 2, 3] eller 1, 2, 3"></textarea>
+            </div>
+            <div>
+                <label for="array-input-2" class="block text-sm font-medium text-gray-700">Lim inn Array 2</label>
+                <textarea id="array-input-2" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="[4, 5, 6] eller 4, 5, 6"></textarea>
+            </div>
+        </div>
+        <div class="text-center mb-8">
+            <button id="compare-pasted-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded">
+                Sammenlign innlimte data
+            </button>
+        </div>
+
+        <div class="mb-8 p-4 bg-gray-50 rounded-lg shadow-inner">
+            <p class="text-lg font-semibold text-gray-700 mb-2">Array1: <span id="array1-display" class="font-normal text-gray-900"></span> (<span id="array1-count" class="font-normal text-gray-900"></span> elements)</p>
+            <p class="text-lg font-semibold text-gray-700 mb-2">Array2: <span id="array2-display" class="font-normal text-gray-900"></span> (<span id="array2-count" class="font-normal text-gray-900"></span> elements)</p>
+            <p class="text-lg font-semibold text-gray-700">Total Unique Elements: <span id="unique-count" class="font-normal text-gray-900"></span></p>
+            <div class="mt-4 flex items-center justify-center">
+                <input type="checkbox" id="use-file-arrays" class="mr-2">
+                <label for="use-file-arrays" class="text-gray-700">Use arrays from files (array1.txt, array2.txt)</label>
+                <button id="load-arrays-btn" class="ml-4 bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-3 rounded text-sm">Load Arrays</button>
+            </div>
+        </div>
+
+        <!-- Dynamic heading with count -->
+        <h2 id="comparison-heading" class="text-2xl font-bold text-gray-800 mb-4 text-center"></h2>
+
+        <div id="comparison-table-tabulator" class="overflow-x-auto"></div>
+
+        <div class="mt-6 text-center">
+            <button id="export-csv" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                Export to CSV
+            </button>
+        </div>
+    </div>
+
+    <!-- Tabulator JS -->
+    <script type="text/javascript" src="https://unpkg.com/tabulator-tables@6.2.0/dist/js/tabulator.min.js"></script>
+
+    <script type="text/javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            const useFileArraysCheckbox = document.getElementById('use-file-arrays');
+            const loadArraysButton = document.getElementById('load-arrays-btn');
+            const comparePastedButton = document.getElementById('compare-pasted-btn');
+            const arrayInput1 = document.getElementById('array-input-1');
+            const arrayInput2 = document.getElementById('array-input-2');
+
+            // Function to parse array string from text, using comma or newline as delimiter
+            function parseArrayString(str) {
+                try {
+                    // Replace newlines with commas, then split by comma.
+                    // This handles both comma and newline as delimiters.
+                    const elements = str.replace(/[\[\]]/g, '') // Remove brackets
+                                        .replace(/\r?\n/g, ',') // Replace newlines with commas
+                                        .split(',');
+
+                    // Trim whitespace from each element and filter out any empty strings.
+                    return elements.map(s => s.trim())
+                                   .filter(s => s !== '');
+                } catch (e) {
+                    console.error("Error parsing array string:", str, e);
+                    return [];
+                }
+            }
+
+            // Function to initialize or re-initialize the comparison and Tabulator table
+            function initializeComparison(array1, array2) {
+                // Konverter Array1 til et Set for effektiv oppslag
+                const array1Set = new Set(array1);
+                const array2Set = new Set(array2);
+
+                const allUniqueValues = new Set([...array1, ...array2]);
+
+                // Vis arrayene i HTML
+                document.getElementById('array1-display').textContent = '[' + array1.join(', ') + ']';
+                document.getElementById('array2-display').textContent = '[' + array2.join(', ') + ']';
+
+                document.getElementById('array1-count').textContent = array1.length;
+                document.getElementById('array2-count').textContent = array2.length;
+                document.getElementById('unique-count').textContent = allUniqueValues.size;
+
+                let countElementsOnlyInArray2 = 0;
+
+                const tableData = Array.from(allUniqueValues).sort((a, b) => String(a).localeCompare(String(b))).map(value => {
+                    const inArray1 = array1Set.has(value);
+                    const inArray2 = array2Set.has(value);
+
+                    let array2ValueInArray1Status = '';
+                    if (inArray2) {
+                        array2ValueInArray1Status = inArray1 ? 'Yes' : 'No';
+                    } else {
+                        array2ValueInArray1Status = 'N/A (Njet in Array2)';
+                    }
+
+                    if (inArray2 && !inArray1) {
+                        countElementsOnlyInArray2++;
+                    }
+
+                    return {
+                        value: value,
+                        inArray1: inArray1 ? 'Yes' : 'No',
+                        inArray2: inArray2 ? 'Yes' : 'No',
+                        array2ValueInArray1: array2ValueInArray1Status,
+                        isHighlighted: (inArray2 && !inArray1)
+                    };
+                });
+
+                const headingElement = document.getElementById('comparison-heading');
+                headingElement.textContent = `There are ${countElementsOnlyInArray2} elements that are in Array2 but not in Array1.`;
+
+                // Initialiser Tabulator
+                // Check if Tabulator instance already exists and destroy it to prevent re-initialization issues
+                const tableElement = document.getElementById("comparison-table-tabulator");
+                if (tableElement.tabulator) {
+                    tableElement.tabulator.destroy();
+                }
+
+                const table = new Tabulator("#comparison-table-tabulator", {
+                    data: tableData,
+                    layout: "fitColumns",
+                    autoColumns: false,
+                    columns: [
+                        {
+                            title: "Value",
+                            field: "value",
+                            headerFilter: "input",
+                            sorter: "string",
+                            cssClass: "text-gray-800",
+                            formatter: function(cell, formatterParams, onRendered){
+                                const data = cell.getRow().getData();
+                                if(data.isHighlighted){
+                                    cell.getElement().classList.add('highlight');
+                                }
+                                return cell.getValue();
+                            }
+                        },
+                        {
+                            title: "In Array1",
+                            field: "inArray1",
+                            headerFilter: "input",
+                            sorter: "string",
+                            formatter: function(cell, formatterParams, onRendered){
+                                const status = cell.getValue();
+                                if(status === 'No'){
+                                    cell.getElement().classList.add('status-red');
+                                } else if (status === 'Yes'){
+                                    cell.getElement().classList.add('status-green');
+                                }
+                                return status;
+                            }
+                        },
+                        {
+                            title: "In Array2",
+                            field: "inArray2",
+                            headerFilter: "input",
+                            sorter: "string",
+                            formatter: function(cell, formatterParams, onRendered){
+                                const status = cell.getValue();
+                                if(status === 'No'){
+                                    cell.getElement().classList.add('status-red');
+                                } else if (status === 'Yes'){
+                                    cell.getElement().classList.add('status-green');
+                                }
+                                return status;
+                            }
+                        },
+                        {
+                            title: "Array2 Value in Array1?",
+                            field: "array2ValueInArray1",
+                            headerFilter: "input",
+                            sorter: "string",
+                            formatter: function(cell, formatterParams, onRendered){
+                                const status = cell.getValue();
+                                if(status === 'No'){
+                                    cell.getElement().classList.add('status-red');
+                                } else if (status === 'Yes'){
+                                    cell.getElement().classList.add('status-green');
+                                }
+                                return status;
+                            }
+                        }
+                    ],
+                    // Legg til noen globale Tabulator-alternativer for bedre brukeropplevelse
+                    pagination: "local", // Aktiver lokal paginering
+                    paginationSize: 10,  // Vis 10 rader per side
+                    paginationCounter: "rows", // Vis antall rader
+                    headerSort: true, // Aktiver sortering ved å klikke på header
+                    placeholder: "Ingen data å vise" // Melding når ingen data er tilgjengelig
+                });
+
+                console.log("Tabulator table initialized with data:", tableData);
+
+                // Store the Tabulator instance on the element for later access
+                tableElement.tabulator = table;
+
+                document.getElementById("export-csv").onclick = function(){
+                    table.download("csv", "comparison_data.csv");
+                };
+            }
+
+            // Initial load with hardcoded arrays
+            const hardcodedArray1 = [1, 2, 3, 700, 777, 800, 900, 8080, 8081, 8088, 9001];
+            const hardcodedArray2 = [1, 2, 5, 600, 777, 900, 8081, 8088, 9000];
+            initializeComparison(hardcodedArray1, hardcodedArray2);
+
+            loadArraysButton.addEventListener('click', async function() {
+                if (useFileArraysCheckbox.checked) {
+                    try {
+                        const response1 = await fetch('array1.txt');
+                        const text1 = await response1.text();
+                        const fileArray1 = parseArrayString(text1);
+
+                        const response2 = await fetch('array2.txt');
+                        const text2 = await response2.text();
+                        const fileArray2 = parseArrayString(text2);
+
+                        initializeComparison(fileArray1, fileArray2);
+                    } catch (error) {
+                        console.error("Error loading arrays from files:", error);
+                        alert("Could not load arrays from files. Please ensure array1.txt and array2.txt exist and are correctly formatted.");
+                        // Fallback to hardcoded arrays if file loading fails
+                        initializeComparison(hardcodedArray1, hardcodedArray2);
+                    }
+                } else {
+                    // If not using files, use the pasted arrays if they exist, otherwise fallback to hardcoded.
+                    const pastedText1 = arrayInput1.value;
+                    const pastedText2 = arrayInput2.value;
+                    if(pastedText1 && pastedText2) {
+                        initializeComparison(parseArrayString(pastedText1), parseArrayString(pastedText2));
+                    } else {
+                        initializeComparison(hardcodedArray1, hardcodedArray2);
+                    }
+                }
+            });
+
+            comparePastedButton.addEventListener('click', function() {
+                const text1 = arrayInput1.value;
+                const text2 = arrayInput2.value;
+
+                if (!text1 || !text2) {
+                    alert("Vennligst lim inn data i begge array-boksene.");
+                    return;
+                }
+
+                const pastedArray1 = parseArrayString(text1);
+                const pastedArray2 = parseArrayString(text2);
+
+                initializeComparison(pastedArray1, pastedArray2);
+            });
+        });
+    </script>
+</body>
+</html>
