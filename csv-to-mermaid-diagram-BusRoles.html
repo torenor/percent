@@ -10,7 +10,7 @@
     <script type="text/javascript" src="https://unpkg.com/tabulator-tables@5.4.4/dist/js/tabulator.min.js"></script>
     <script type="text/javascript" src="https://oss.sheetjs.com/sheetjs/xlsx.full.min.js"></script>
     <script defer src="https://cloud.umami.is/script.js" data-website-id="db8120ea-7073-4a37-894d-8185dc1c3313"></script>
-    <script src="https://cc.tnixt.com/tn_ek_ClickClient.js" defer></script>
+   
 
     <style>
         body { font-family: sans-serif; margin: 20px; }
@@ -351,6 +351,8 @@ config:
                         deleted_idautoPersonExt19: getAndJoin(entry, 'deleted.idautoPersonExt19'),
                         idautoPersonAppRoles1: getAndJoin(entry, 'idautoPersonAppRoles1'),
                         idautoPersonAppRoles10: getAndJoin(entry, 'idautoPersonAppRoles10'),
+                        fil: getAndJoin(entry, 'fil')
+                       
                     };
                 });
                 initializeBusRolesTable(tableRows);
@@ -363,14 +365,16 @@ config:
                     { title: "Change Type", field: "changetype", headerFilter: true, width: 100 },
                     { title: "Added Affiliations", field: "added_idautoPersonAffiliations", headerFilter: true, formatter: "textarea" },
                     { title: "Deleted Affiliations", field: "deleted_idautoPersonAffiliations", headerFilter: true, formatter: "textarea" },
+                     { title: "AppRoles1", field: "idautoPersonAppRoles1", headerFilter: true, formatter: "textarea" },
+                    { title: "AppRoles10", field: "idautoPersonAppRoles10", headerFilter: true, formatter: "textarea" },
                     { title: "Added Ext9", field: "added_idautoPersonExt9", headerFilter: true, formatter: "textarea" },
                     { title: "Deleted Ext9", field: "deleted_idautoPersonExt9", headerFilter: true, formatter: "textarea" },
                     { title: "Added Ext10", field: "added_idautoPersonExt10", headerFilter: true, formatter: "textarea" },
                     { title: "Deleted Ext10", field: "deleted_idautoPersonExt10", headerFilter: true, formatter: "textarea" },
                     { title: "Added Ext19", field: "added_idautoPersonExt19", headerFilter: true, formatter: "textarea" },
                     { title: "Deleted Ext19", field: "deleted_idautoPersonExt19", headerFilter: true, formatter: "textarea" },
-                    { title: "AppRoles1", field: "idautoPersonAppRoles1", headerFilter: true, formatter: "textarea" },
-                    { title: "AppRoles10", field: "idautoPersonAppRoles10", headerFilter: true, formatter: "textarea" },
+                    { title: "File", field: "fil", headerFilter: true, formatter: "textarea" }
+                   
                 ];
 
                 table = new Tabulator("#tabulator-table", {
